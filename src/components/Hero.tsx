@@ -1,9 +1,19 @@
 
 import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const Hero = () => {
+  const navigate = useNavigate();
+  
+  const handleGetStarted = () => {
+    navigate('/register');
+  };
+  
+  const handleSignIn = () => {
+    navigate('/login');
+  };
+  
   return (
     <section className="relative px-4 pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
       {/* Background gradient */}
@@ -35,13 +45,20 @@ const Hero = () => {
           
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full max-w-md animate-fade-up [animation-delay:400ms]">
-            <Button size="lg" className="w-full sm:w-auto rounded-full" asChild>
-              <Link to="/register">
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto rounded-full" 
+              onClick={handleGetStarted}
+            >
+              Get Started <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full" asChild>
-              <Link to="/login">Sign In</Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full sm:w-auto rounded-full" 
+              onClick={handleSignIn}
+            >
+              Sign In
             </Button>
           </div>
           

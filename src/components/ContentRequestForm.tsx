@@ -42,6 +42,7 @@ const ContentRequestForm = () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
       toast.success('Content request submitted successfully');
+      console.log('Form data submitted:', formData);
       
       // Reset form
       setFormData({

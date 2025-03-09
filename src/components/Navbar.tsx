@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +24,26 @@ const Navbar = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
+
+  const handleSignupClick = () => {
+    navigate('/register');
+  };
+
+  const handleDashboardClick = () => {
+    // Check if user is logged in (in a real app, this would check auth state)
+    const isLoggedIn = location.pathname === '/dashboard'; // Simplified for demo
+    
+    if (!isLoggedIn) {
+      toast.info('Please log in to access the dashboard');
+      navigate('/login');
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   return (
     <header
@@ -49,23 +71,27 @@ const Navbar = () => {
           >
             Home
           </Link>
-          <Link
-            to="/dashboard"
+          <button
+            onClick={handleDashboardClick}
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Dashboard
-          </Link>
+          </button>
           <div className="ml-4 flex gap-3">
             <Button
               variant="outline"
               size="sm"
               className="rounded-full"
-              asChild
+              onClick={handleLoginClick}
             >
-              <Link to="/login">Log in</Link>
+              Log in
             </Button>
-            <Button size="sm" className="rounded-full" asChild>
-              <Link to="/register">Sign up</Link>
+            <Button 
+              size="sm" 
+              className="rounded-full" 
+              onClick={handleSignupClick}
+            >
+              Sign up
             </Button>
           </div>
         </nav>
@@ -90,22 +116,25 @@ const Navbar = () => {
             >
               Home
             </Link>
-            <Link
-              to="/dashboard"
-              className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+            <button
+              onClick={handleDashboardClick}
+              className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors text-left"
             >
               Dashboard
-            </Link>
+            </button>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
                 className="w-full rounded-full"
-                asChild
+                onClick={handleLoginClick}
               >
-                <Link to="/login">Log in</Link>
+                Log in
               </Button>
-              <Button className="w-full rounded-full" asChild>
-                <Link to="/register">Sign up</Link>
+              <Button 
+                className="w-full rounded-full" 
+                onClick={handleSignupClick}
+              >
+                Sign up
               </Button>
             </div>
           </nav>

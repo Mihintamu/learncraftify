@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 import SubjectCard from '@/components/SubjectCard';
 import ContentRequestForm from '@/components/ContentRequestForm';
 
@@ -68,10 +68,22 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('subjects');
   
   const handleLogout = () => {
-    // Simulate logout
+    toast.success('Successfully logged out');
     navigate('/');
   };
   
+  const handleSettingsClick = () => {
+    toast.info('Settings will be available in the next update');
+  };
+  
+  const handleSavedClick = () => {
+    toast.info('Saved materials will be available in the next update');
+  };
+  
+  const handleActivityClick = (activity: { title: string; type: string }) => {
+    toast.info(`Opening ${activity.title}`);
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
@@ -94,11 +106,11 @@ const Dashboard = () => {
             <History className="h-5 w-5" />
             History
           </Button>
-          <Button variant="ghost" className="justify-start gap-3">
+          <Button variant="ghost" className="justify-start gap-3" onClick={handleSavedClick}>
             <Bookmark className="h-5 w-5" />
             Saved
           </Button>
-          <Button variant="ghost" className="justify-start gap-3">
+          <Button variant="ghost" className="justify-start gap-3" onClick={handleSettingsClick}>
             <Settings className="h-5 w-5" />
             Settings
           </Button>
@@ -125,7 +137,7 @@ const Dashboard = () => {
             <History className="h-5 w-5 mb-1" />
             <span className="text-xs">History</span>
           </Button>
-          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none">
+          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none" onClick={handleSettingsClick}>
             <Settings className="h-5 w-5 mb-1" />
             <span className="text-xs">Settings</span>
           </Button>
@@ -180,7 +192,7 @@ const Dashboard = () => {
                     title={subject.title}
                     description={subject.description}
                     icon={subject.icon}
-                    href={subject.href}
+                    href={`#${subject.title.toLowerCase().replace(/\s+/g, '-')}`}
                   />
                 ))}
               </div>
@@ -197,7 +209,11 @@ const Dashboard = () => {
                 <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
                 
                 {recentActivityData.map((item) => (
-                  <Card key={item.id} className="hover-lift cursor-pointer">
+                  <Card 
+                    key={item.id} 
+                    className="hover-lift cursor-pointer"
+                    onClick={() => handleActivityClick(item)}
+                  >
                     <CardContent className="p-4 flex items-center">
                       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-purple-100 text-purple-600 mr-4">
                         {item.type === 'assignment' ? (

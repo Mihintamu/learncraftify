@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface SubjectCardProps {
   title: string;
@@ -13,8 +14,13 @@ interface SubjectCardProps {
 }
 
 const SubjectCard = ({ title, description, icon, href, className }: SubjectCardProps) => {
+  const handleSubjectClick = () => {
+    // Show a toast notification when a subject is clicked
+    toast.info(`${title} selected. Content will be available soon.`);
+  };
+
   return (
-    <Link to={href}>
+    <Link to={href} onClick={handleSubjectClick}>
       <Card 
         className={cn(
           "overflow-hidden hover-lift cursor-pointer group h-full", 
