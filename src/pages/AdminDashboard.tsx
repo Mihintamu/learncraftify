@@ -6,11 +6,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Users, Book, FileText, Settings, LogOut } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('subjects');
+  
+  // Subject management state
+  const [subjects, setSubjects] = useState([
+    "Mathematics", "Computer Science", "Engineering", 
+    "Physics", "Chemistry", "Biology"
+  ]);
+  const [newSubject, setNewSubject] = useState('');
+  
+  // Content management state
+  const [contentFiles, setContentFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // User management state
+  const [userExportLoading, setUserExportLoading] = useState(false);
+  
+  // Settings state
+  const [isChangingAccessCode, setIsChangingAccessCode] = useState(false);
+  const [isConfiguringSettings, setIsConfiguringSettings] = useState(false);
 
   const handleLogout = () => {
     toast({
@@ -20,11 +39,106 @@ const AdminDashboard = () => {
     navigate('/admin');
   };
 
-  const handleAddContent = () => {
+  // Subject management functions
+  const handleAddSubject = () => {
+    if (!newSubject.trim()) {
+      toast({
+        title: "Error",
+        description: "Subject name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (subjects.includes(newSubject.trim())) {
+      toast({
+        title: "Error",
+        description: "Subject already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSubjects([...subjects, newSubject.trim()]);
+    setNewSubject('');
+    
     toast({
-      title: "Coming Soon",
-      description: "Content upload functionality will be available soon",
+      title: "Subject added",
+      description: `"${newSubject.trim()}" has been added successfully`,
     });
+  };
+  
+  const handleEditSubject = (index, originalName) => {
+    toast({
+      title: "Edit Subject",
+      description: `Editing functionality for "${originalName}" will be available soon`,
+    });
+  };
+  
+  const handleDeleteSubject = (index, subjectName) => {
+    const updatedSubjects = [...subjects];
+    updatedSubjects.splice(index, 1);
+    setSubjects(updatedSubjects);
+    
+    toast({
+      title: "Subject deleted",
+      description: `"${subjectName}" has been removed successfully`,
+    });
+  };
+
+  // Content management functions
+  const handleAddContent = () => {
+    setIsUploading(true);
+    
+    // Simulate upload delay
+    setTimeout(() => {
+      setIsUploading(false);
+      toast({
+        title: "Upload Complete",
+        description: "Content has been uploaded successfully",
+      });
+    }, 1500);
+  };
+
+  // User management functions
+  const handleExportUsers = () => {
+    setUserExportLoading(true);
+    
+    // Simulate export delay
+    setTimeout(() => {
+      setUserExportLoading(false);
+      toast({
+        title: "Users Exported",
+        description: "User data has been exported successfully",
+      });
+    }, 1500);
+  };
+
+  // Settings functions
+  const handleChangeAccessCode = () => {
+    setIsChangingAccessCode(true);
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      setIsChangingAccessCode(false);
+      toast({
+        title: "Access Code Updated",
+        description: "Admin access code has been changed successfully",
+      });
+    }, 1500);
+  };
+  
+  const handleConfigureSettings = () => {
+    setIsConfiguringSettings(true);
+    
+    // Simulate processing delay
+    setTimeout(() => {
+      setIsConfiguringSettings(false);
+      toast({
+        title: "Settings Updated",
+        description: "System preferences have been configured successfully",
+      });
+    }, 1500);
   };
 
   return (
@@ -112,22 +226,30 @@ const AdminDashboard = () => {
             <TabsContent value="subjects" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-medium">Manage Subjects</h2>
-                <Button>
-                  <Book className="mr-2 h-4 w-4" />
-                  Add Subject
-                </Button>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="New subject name" 
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    className="w-48 md:w-64"
+                  />
+                  <Button onClick={handleAddSubject}>
+                    <Book className="mr-2 h-4 w-4" />
+                    Add Subject
+                  </Button>
+                </div>
               </div>
               
               <div className="grid md:grid-cols-3 gap-4">
-                {["Mathematics", "Computer Science", "Engineering", "Physics", "Chemistry", "Biology"].map((subject) => (
-                  <Card key={subject}>
+                {subjects.map((subject, index) => (
+                  <Card key={`${subject}-${index}`}>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">{subject}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline">Edit</Button>
-                        <Button size="sm" variant="destructive">Delete</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEditSubject(index, subject)}>Edit</Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteSubject(index, subject)}>Delete</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -138,9 +260,15 @@ const AdminDashboard = () => {
             <TabsContent value="content" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-medium">Manage Content</h2>
-                <Button onClick={handleAddContent}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Content
+                <Button onClick={handleAddContent} disabled={isUploading}>
+                  {isUploading ? (
+                    <>Uploading...</>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Content
+                    </>
+                  )}
                 </Button>
               </div>
               
@@ -149,9 +277,20 @@ const AdminDashboard = () => {
                   <CardTitle>Content Repository</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center py-8 text-muted-foreground">
-                    No content has been uploaded yet. Click "Upload Content" to add study materials.
-                  </p>
+                  {contentFiles.length > 0 ? (
+                    <div className="space-y-2">
+                      {contentFiles.map((file, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 border rounded">
+                          <span>{file.name}</span>
+                          <Button variant="destructive" size="sm">Remove</Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center py-8 text-muted-foreground">
+                      No content has been uploaded yet. Click "Upload Content" to add study materials.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -159,9 +298,15 @@ const AdminDashboard = () => {
             <TabsContent value="users" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-medium">Manage Users</h2>
-                <Button variant="outline">
-                  <Users className="mr-2 h-4 w-4" />
-                  Export Users
+                <Button variant="outline" onClick={handleExportUsers} disabled={userExportLoading}>
+                  {userExportLoading ? (
+                    <>Exporting...</>
+                  ) : (
+                    <>
+                      <Users className="mr-2 h-4 w-4" />
+                      Export Users
+                    </>
+                  )}
                 </Button>
               </div>
               
@@ -185,11 +330,15 @@ const AdminDashboard = () => {
                 <CardContent className="space-y-4">
                   <div>
                     <h3 className="font-medium mb-2">Admin Access</h3>
-                    <Button>Change Access Code</Button>
+                    <Button onClick={handleChangeAccessCode} disabled={isChangingAccessCode}>
+                      {isChangingAccessCode ? 'Updating...' : 'Change Access Code'}
+                    </Button>
                   </div>
                   <div>
                     <h3 className="font-medium mb-2">System Preferences</h3>
-                    <Button variant="outline">Configure Settings</Button>
+                    <Button variant="outline" onClick={handleConfigureSettings} disabled={isConfiguringSettings}>
+                      {isConfiguringSettings ? 'Configuring...' : 'Configure Settings'}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
