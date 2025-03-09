@@ -38,8 +38,8 @@ const AdminLogin = () => {
           description: "Admin access granted",
         });
         
-        // Navigate to admin dashboard (to be created)
-        navigate('/dashboard');
+        // Navigate to admin dashboard
+        navigate('/admin/dashboard');
       } else {
         throw new Error('Invalid access code');
       }
