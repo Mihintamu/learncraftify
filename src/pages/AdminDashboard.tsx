@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -45,15 +46,21 @@ const AdminDashboard = () => {
 
   // Check for admin authentication on load
   useEffect(() => {
-    const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
-    if (!isAdminAuthenticated) {
-      navigate('/admin');
-      toast({
-        title: "Authentication required",
-        description: "Please login to access the admin panel",
-        variant: "destructive",
-      });
-    }
+    const checkAuth = () => {
+      const isAdminAuthenticated = localStorage.getItem('adminAuthenticated');
+      console.log('Admin auth check:', isAdminAuthenticated);
+      
+      if (isAdminAuthenticated !== 'true') {
+        navigate('/admin');
+        toast({
+          title: "Authentication required",
+          description: "Please login to access the admin panel",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    checkAuth();
   }, [navigate, toast]);
 
   const handleLogout = () => {
@@ -602,4 +609,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

@@ -28,10 +28,14 @@ const AdminLogin = () => {
     setIsLoading(true);
     
     try {
-      // Check if the access code is correct
+      // Check if the access code is correct - in a real app, this would be verified server-side
       if (accessCode === 'ADMIN@123*') {
         // Simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1500));
+        
+        // Set admin authentication status in localStorage
+        localStorage.setItem('adminAuthenticated', 'true');
+        console.log('Admin authenticated, setting localStorage');
         
         toast({
           title: "Success",
