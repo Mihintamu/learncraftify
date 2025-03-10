@@ -1,23 +1,52 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Book } from 'lucide-react';
+import { Book, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const SubjectsTab = () => {
   const { toast } = useToast();
   
   // Subject management state
-  const [subjects, setSubjects] = useState([
-    "Mathematics", "Computer Science", "Engineering", 
-    "Physics", "Chemistry", "Biology"
-  ]);
+  const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
   const [newSubject, setNewSubject] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Fetch subjects on component mount
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+  
+  // Fetch subjects from Supabase
+  const fetchSubjects = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .order('name');
+        
+      if (error) throw error;
+      
+      setSubjects(data || []);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subjects. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Subject management functions
-  const handleAddSubject = () => {
+  const handleAddSubject = async () => {
     if (!newSubject.trim()) {
       toast({
         title: "Error",
@@ -27,7 +56,7 @@ const SubjectsTab = () => {
       return;
     }
     
-    if (subjects.includes(newSubject.trim())) {
+    if (subjects.some(subject => subject.name.toLowerCase() === newSubject.trim().toLowerCase())) {
       toast({
         title: "Error",
         description: "Subject already exists",
@@ -36,31 +65,67 @@ const SubjectsTab = () => {
       return;
     }
     
-    setSubjects([...subjects, newSubject.trim()]);
-    setNewSubject('');
+    setIsSubmitting(true);
     
-    toast({
-      title: "Subject added",
-      description: `"${newSubject.trim()}" has been added successfully`,
-    });
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .insert([{ name: newSubject.trim() }])
+        .select();
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setSubjects([...subjects, data[0]]);
+        setNewSubject('');
+        
+        toast({
+          title: "Subject added",
+          description: `"${newSubject.trim()}" has been added successfully`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add subject. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
-  const handleEditSubject = (index: number, originalName: string) => {
+  const handleEditSubject = (id: string, originalName: string) => {
     toast({
       title: "Edit Subject",
       description: `Editing functionality for "${originalName}" will be available soon`,
     });
   };
   
-  const handleDeleteSubject = (index: number, subjectName: string) => {
-    const updatedSubjects = [...subjects];
-    updatedSubjects.splice(index, 1);
-    setSubjects(updatedSubjects);
-    
-    toast({
-      title: "Subject deleted",
-      description: `"${subjectName}" has been removed successfully`,
-    });
+  const handleDeleteSubject = async (id: string, subjectName: string) => {
+    try {
+      const { error } = await supabase
+        .from('subjects')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setSubjects(subjects.filter(subject => subject.id !== id));
+      
+      toast({
+        title: "Subject deleted",
+        description: `"${subjectName}" has been removed successfully`,
+      });
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete subject. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -73,29 +138,45 @@ const SubjectsTab = () => {
             value={newSubject}
             onChange={(e) => setNewSubject(e.target.value)}
             className="w-48 md:w-64"
+            disabled={isSubmitting}
           />
-          <Button onClick={handleAddSubject}>
-            <Book className="mr-2 h-4 w-4" />
-            Add Subject
+          <Button onClick={handleAddSubject} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <Book className="mr-2 h-4 w-4" />
+                Add Subject
+              </>
+            )}
           </Button>
         </div>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-4">
-        {subjects.map((subject, index) => (
-          <Card key={`${subject}-${index}`}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{subject}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={() => handleEditSubject(index, subject)}>Edit</Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDeleteSubject(index, subject)}>Delete</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-4">
+          {subjects.map((subject) => (
+            <Card key={subject.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{subject.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleEditSubject(subject.id, subject.name)}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDeleteSubject(subject.id, subject.name)}>Delete</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
