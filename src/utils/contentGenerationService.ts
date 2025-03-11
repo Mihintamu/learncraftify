@@ -36,22 +36,30 @@ export const generateContent = async (
       instructions: requestData.instructions ? requestData.instructions.trim() : ''
     };
     
-    // Validate that the data can be properly stringified
+    console.log('Request data after cleaning:', cleanRequestData);
+    
+    // Test that the data is valid JSON
     let requestBody: string;
     try {
       requestBody = JSON.stringify(cleanRequestData);
       console.log('Stringified request body:', requestBody);
+      
+      // Validate the stringified JSON
+      const parsedBack = JSON.parse(requestBody);
+      console.log('Validated parsed JSON:', parsedBack);
+      
       if (!requestBody || requestBody === '{}' || requestBody === 'null') {
         throw new Error('Failed to stringify request data or resulted in empty object');
       }
     } catch (e: any) {
+      console.error('JSON validation error:', e);
       throw new Error(`Invalid request data: ${e.message}`);
     }
 
     console.log('Sending request to Edge Function with body:', requestBody);
     
     const { data, error } = await supabase.functions.invoke('generate-content', {
-      body: requestBody,
+      body: cleanRequestData,
       headers: {
         'Content-Type': 'application/json',
       }
