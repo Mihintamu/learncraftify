@@ -12,14 +12,30 @@ import ContentFileList from './ContentFileList';
 import QuestionPaperUpload from './QuestionPaperUpload';
 import QuestionPaperList from './QuestionPaperList';
 
+// Define types for our data structures
+interface ContentFile {
+  id: string;
+  name: string;
+  size: string;
+  date: string;
+}
+
+interface QuestionPaper {
+  id: string;
+  name: string;
+  year: string;
+  size: string;
+  date: string;
+}
+
 const ContentTab = () => {
   const { toast } = useToast();
   
   // Subject and content management state
   const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>("common");
-  const [contentFiles, setContentFiles] = useState<{name: string, size: string, date: string, id: string}[]>([]);
-  const [questionPapers, setQuestionPapers] = useState<{id: string, name: string, year: string, size: string, date: string}[]>([]);
+  const [contentFiles, setContentFiles] = useState<ContentFile[]>([]);
+  const [questionPapers, setQuestionPapers] = useState<QuestionPaper[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPapersLoading, setIsPapersLoading] = useState(true);
   const [isLoadingSubjects, setIsLoadingSubjects] = useState(true);
@@ -98,22 +114,39 @@ const ContentTab = () => {
   const fetchQuestionPapers = async () => {
     try {
       setIsPapersLoading(true);
-      // Using 'as any' as a temporary workaround for type issues
+      
+      // Use explicit type casting with Database types
       const { data, error } = await supabase
-        .from('question_papers' as any)
+        .from('question_papers')
         .select('*')
         .eq('subject', selectedSubject)
         .order('year', { ascending: false });
         
       if (error) throw error;
       
-      const formattedPapers = data?.map(paper => ({
-        id: paper.id,
-        name: paper.file_name,
-        year: paper.year,
-        size: paper.file_size,
-        date: new Date(paper.upload_date).toLocaleDateString(),
-      })) || [];
+      // Safely handle the data with proper type checking
+      const formattedPapers: QuestionPaper[] = [];
+      
+      if (data) {
+        for (const paper of data) {
+          // Check if the paper object has the expected properties
+          if (
+            'id' in paper && 
+            'file_name' in paper && 
+            'year' in paper && 
+            'file_size' in paper && 
+            'upload_date' in paper
+          ) {
+            formattedPapers.push({
+              id: paper.id as string,
+              name: paper.file_name as string,
+              year: paper.year as string,
+              size: paper.file_size as string,
+              date: new Date(paper.upload_date as string).toLocaleDateString(),
+            });
+          }
+        }
+      }
       
       setQuestionPapers(formattedPapers);
     } catch (error) {
@@ -129,12 +162,12 @@ const ContentTab = () => {
   };
   
   // Handle adding a new file
-  const handleFileUploaded = (newFile: {id: string, name: string, size: string, date: string}) => {
+  const handleFileUploaded = (newFile: ContentFile) => {
     setContentFiles([newFile, ...contentFiles]);
   };
   
   // Handle adding a new question paper
-  const handlePaperUploaded = (newPaper: {id: string, name: string, year: string, size: string, date: string}) => {
+  const handlePaperUploaded = (newPaper: QuestionPaper) => {
     setQuestionPapers([newPaper, ...questionPapers]);
   };
   

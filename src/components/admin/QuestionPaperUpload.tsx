@@ -18,6 +18,15 @@ interface QuestionPaperUploadProps {
   }) => void;
 }
 
+interface QuestionPaperInsertResult {
+  id: string;
+  file_name: string;
+  year: string;
+  file_size: string;
+  upload_date: string;
+  [key: string]: any; // Allow for other properties
+}
+
 const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaperUploadProps) => {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -76,9 +85,9 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
         .from('question_papers')
         .getPublicUrl(filePath);
       
-      // Add file metadata to the database (using any as a temporary workaround for type issues)
+      // Add file metadata to the database
       const { data, error } = await supabase
-        .from('question_papers' as any)
+        .from('question_papers')
         .insert([{
           subject: selectedSubject,
           file_name: selectedFile.name,
@@ -91,17 +100,22 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
         
       if (error) throw error;
       
-      // Notify parent component with the new file
+      // Safely handle the response data
       if (data && data.length > 0) {
+        // Validate the returned data has the expected properties
+        const paperData = data[0] as QuestionPaperInsertResult;
+        
         const newPaper = {
-          id: data[0].id,
-          name: data[0].file_name,
-          year: data[0].year,
-          size: data[0].file_size,
-          date: new Date(data[0].upload_date).toLocaleDateString()
+          id: paperData.id,
+          name: paperData.file_name,
+          year: paperData.year,
+          size: paperData.file_size,
+          date: new Date(paperData.upload_date).toLocaleDateString()
         };
         
         onPaperUploaded(newPaper);
+      } else {
+        throw new Error('No data returned after insert');
       }
       
       // Reset the form

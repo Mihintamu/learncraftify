@@ -31,14 +31,19 @@ const QuestionPaperList = ({
     try {
       setDeletingId(id);
       
-      // First get the file record to get the path (using any as a temporary workaround for type issues)
+      // First get the file record to get the path
       const { data: fileData, error: fetchError } = await supabase
-        .from('question_papers' as any)
+        .from('question_papers')
         .select('file_path')
         .eq('id', id)
         .single();
         
       if (fetchError) throw fetchError;
+      
+      // Safely check for the file_path property
+      if (!fileData || typeof fileData.file_path !== 'string') {
+        throw new Error('File path not found');
+      }
       
       // Extract the storage file path from the URL
       const storagePath = fileData.file_path.split('/').slice(-2).join('/');
@@ -55,7 +60,7 @@ const QuestionPaperList = ({
       
       // Delete the file record from the database
       const { error: deleteError } = await supabase
-        .from('question_papers' as any)
+        .from('question_papers')
         .delete()
         .eq('id', id);
         
