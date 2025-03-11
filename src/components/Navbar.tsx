@@ -71,6 +71,12 @@ const Navbar = () => {
           >
             Home
           </Link>
+          <Link
+            to="/pricing"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Pricing
+          </Link>
           <button
             onClick={handleDashboardClick}
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -115,6 +121,12 @@ const Navbar = () => {
               className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
             >
               Home
+            </Link>
+            <Link
+              to="/pricing"
+              className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+            >
+              Pricing
             </Link>
             <button
               onClick={handleDashboardClick}
