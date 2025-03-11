@@ -17,6 +17,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -38,31 +39,62 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      console.log('Attempting login with:', { email: formData.email });
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      if (isRegistering) {
+        // Handle registration
+        console.log('Attempting registration with:', { email: formData.email });
+        
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      if (error) {
-        console.error('Login error:', error);
-        if (error.message.includes('Email not confirmed')) {
-          toast.error('Please check your email to confirm your account');
-        } else {
-          toast.error(error.message || 'Failed to login');
+        if (error) {
+          console.error('Registration error:', error);
+          toast.error(error.message || 'Failed to register');
+          return;
         }
-        return;
-      }
 
-      if (data.user) {
-        console.log('Login successful:', data.user);
-        toast.success('Successfully logged in');
-        navigate('/dashboard');
+        if (data.user) {
+          console.log('Registration successful:', data.user);
+          
+          if (data.user.identities && data.user.identities.length === 0) {
+            toast.error('This email is already registered. Please login instead.');
+            setIsRegistering(false);
+            return;
+          }
+          
+          toast.success('Registration successful! Please check your email to confirm your account.');
+          setIsRegistering(false);
+        }
+      } else {
+        // Handle login
+        console.log('Attempting login with:', { email: formData.email });
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          console.error('Login error:', error);
+          if (error.message.includes('Email not confirmed')) {
+            toast.error('Please check your email to confirm your account');
+          } else if (error.message.includes('Invalid login credentials')) {
+            toast.error('Invalid email or password. If you\'re new, please register first.');
+          } else {
+            toast.error(error.message || 'Failed to login');
+          }
+          return;
+        }
+
+        if (data.user) {
+          console.log('Login successful:', data.user);
+          toast.success('Successfully logged in');
+          navigate('/dashboard');
+        }
       }
-      
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Auth error:', error);
       toast.error(error.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -107,7 +139,7 @@ const LoginForm = () => {
             placeholder="••••••••"
             value={formData.password}
             onChange={handleChange}
-            autoComplete="current-password"
+            autoComplete={isRegistering ? "new-password" : "current-password"}
             disabled={isLoading}
             required
           />
@@ -129,12 +161,24 @@ const LoginForm = () => {
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Signing in...
+            {isRegistering ? 'Creating account...' : 'Signing in...'}
           </>
         ) : (
-          'Sign in'
+          isRegistering ? 'Register' : 'Sign in'
         )}
       </Button>
+      
+      <div className="mt-4 text-center">
+        <button
+          type="button"
+          className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+          onClick={() => setIsRegistering(!isRegistering)}
+        >
+          {isRegistering 
+            ? 'Already have an account? Sign in' 
+            : 'Don\'t have an account? Register'}
+        </button>
+      </div>
     </form>
   );
 };
