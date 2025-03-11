@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,67 +12,47 @@ export interface ContentGenerationResponse {
   error?: string;
 }
 
-type RaceResult = 
-  | { type: 'response'; data: { data: ContentGenerationResponse; error: any } }
-  | { type: 'timeout' };
-
 export const generateContent = async (
   requestData: ContentGenerationRequest
 ): Promise<ContentGenerationResponse> => {
   console.log('Preparing to send request to generate-content with:', requestData);
   
   try {
-    // Make the request with a timeout
-    const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
-    );
-    
-    const functionPromise = supabase.functions.invoke('generate-content', {
+    console.log('Sending request to Edge Function...');
+    const { data, error } = await supabase.functions.invoke('generate-content', {
       body: requestData
     });
 
-    console.log('Sending request to Edge Function...');
-    
-    const response = await Promise.race([
-      functionPromise.then(res => ({ type: 'response', data: res } as RaceResult)),
-      timeoutPromise
-    ]);
+    console.log('Received response:', { data, error });
 
-    console.log('Received response from Edge Function:', response);
-    
-    // Properly type check the response
-    if ('type' in response && response.type === 'response') {
-      const { data, error } = response.data;
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Edge Function error: ${error.message || JSON.stringify(error)}`);
-      }
-      
-      if (!data) {
-        throw new Error('No data received from Edge Function');
-      }
-      
-      if (typeof data.content !== 'string') {
-        console.error('Unexpected response format:', data);
-        throw new Error('Invalid response format from Edge Function');
-      }
-      
-      return { content: data.content };
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(`Edge Function error: ${error.message || JSON.stringify(error)}`);
     }
+
+    if (!data) {
+      throw new Error('No data received from Edge Function');
+    }
+
+    if ('error' in data) {
+      throw new Error(data.error);
+    }
+
+    if (!('content' in data) || typeof data.content !== 'string') {
+      console.error('Unexpected response format:', data);
+      throw new Error('Invalid response format from Edge Function');
+    }
+
+    return { content: data.content };
     
-    throw new Error('Unexpected response format');
   } catch (error: any) {
     console.error('Error generating content:', error);
     
-    // More specific error messages based on the error type
     let errorMessage = 'Failed to generate content. ';
-    if (error.message?.includes('Failed to fetch')) {
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
       errorMessage += 'Network error - please check your connection.';
     } else if (error.message?.includes('timeout')) {
       errorMessage += 'Request timed out - please try again.';
-    } else if (error.statusText) {
-      errorMessage += `Server error: ${error.statusText}`;
     } else {
       errorMessage += error.message || 'Unknown error occurred';
     }
