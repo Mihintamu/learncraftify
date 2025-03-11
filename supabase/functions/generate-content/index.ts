@@ -20,22 +20,29 @@ function createResponse(body: any, status = 200) {
 
 async function handleRequest(req: Request) {
   try {
-    // Check if the request body is empty
-    const bodyText = await req.text();
-    if (!bodyText || bodyText.trim() === '') {
-      console.error('Empty request body received');
+    console.log('Request content-type:', req.headers.get('content-type'));
+    
+    // First check if the content-type is correct
+    const contentType = req.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('Invalid content-type:', contentType);
       return createResponse({
-        error: 'Empty request body received'
+        error: 'Content-Type must be application/json'
       }, 400);
     }
-
-    // Parse JSON safely
+    
+    // Use clone to avoid consuming the body
+    const clonedReq = req.clone();
+    console.log('Request method:', clonedReq.method);
+    console.log('Request headers:', Object.fromEntries(clonedReq.headers.entries()));
+    
+    // Parse request body directly as JSON
     let requestData;
     try {
-      requestData = JSON.parse(bodyText);
-      console.log('Received request data:', JSON.stringify(requestData));
+      requestData = await req.json();
+      console.log('Successfully parsed request data:', JSON.stringify(requestData));
     } catch (jsonError) {
-      console.error('Invalid JSON in request body:', bodyText, jsonError);
+      console.error('Failed to parse request JSON:', jsonError);
       return createResponse({
         error: `Invalid JSON in request body: ${jsonError.message}`
       }, 400);
