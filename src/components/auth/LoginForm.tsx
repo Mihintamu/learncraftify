@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 interface FormData {
   email: string;
   password: string;
+  username?: string;
+  phone?: string;
 }
 
 const LoginForm = () => {
@@ -21,6 +23,8 @@ const LoginForm = () => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
+    username: '',
+    phone: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +36,12 @@ const LoginForm = () => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
-      toast.error("Please fill in all fields");
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    if (isRegistering && !formData.username) {
+      toast.error("Username is required for registration");
       return;
     }
     
@@ -41,11 +50,22 @@ const LoginForm = () => {
     try {
       if (isRegistering) {
         // Handle registration
-        console.log('Attempting registration with:', { email: formData.email });
+        console.log('Attempting registration with:', { 
+          email: formData.email,
+          username: formData.username,
+          phone: formData.phone 
+        });
         
         const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
+          options: {
+            data: {
+              username: formData.username,
+              phone: formData.phone || '',
+              full_name: formData.username, // Setting full_name to username initially
+            }
+          }
         });
 
         if (error) {
@@ -119,6 +139,44 @@ const LoginForm = () => {
           required
         />
       </div>
+      
+      {isRegistering && (
+        <>
+          <div className="space-y-2">
+            <label htmlFor="username" className="text-sm font-medium">
+              Username
+            </label>
+            <Input
+              id="username"
+              name="username"
+              type="text"
+              placeholder="username"
+              value={formData.username}
+              onChange={handleChange}
+              autoComplete="username"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium">
+              Phone (optional)
+            </label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="+1234567890"
+              value={formData.phone}
+              onChange={handleChange}
+              autoComplete="tel"
+              disabled={isLoading}
+            />
+          </div>
+        </>
+      )}
+      
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label htmlFor="password" className="text-sm font-medium">

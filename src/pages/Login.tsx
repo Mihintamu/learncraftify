@@ -32,6 +32,17 @@ const Login = () => {
           <SocialLogin isLoading={isLoading} setIsLoading={setIsLoading} />
         </CardFooter>
       </Card>
+      
+      <div className="mt-6 text-center text-sm text-gray-500">
+        <p className="mb-2">
+          Having trouble logging in? Try these steps:
+        </p>
+        <ul className="list-disc text-left inline-block">
+          <li>Check your email for verification link if you just registered</li>
+          <li>Make sure you're using the correct email and password</li>
+          <li>If you're new, use the "Register" option to create an account first</li>
+        </ul>
+      </div>
     </div>
   );
 };
