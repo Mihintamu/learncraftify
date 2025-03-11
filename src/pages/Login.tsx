@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2, Cpu } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,8 +38,15 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Authenticate with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Success",
@@ -47,13 +55,59 @@ const Login = () => {
       
       // Navigate to dashboard
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
-        description: "Invalid email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add social login functions
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not sign in with Google",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Apple login error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not sign in with Apple",
+        variant: "destructive",
+      });
       setIsLoading(false);
     }
   };
@@ -152,10 +206,10 @@ const Login = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 w-full">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
               Google
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={handleAppleLogin} disabled={isLoading}>
               Apple
             </Button>
           </div>
