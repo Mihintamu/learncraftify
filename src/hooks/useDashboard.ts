@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 interface Subject {
   id: string;
   name: string;
+  title: string;  // Add this to maintain compatibility
   description?: string;
   icon: string;
   href: string;
@@ -116,7 +117,8 @@ export const useDashboard = () => {
       
       const mappedSubjects = data?.map(subject => ({
         id: subject.id,
-        title: subject.name,
+        name: subject.name,
+        title: subject.name, // Add this to maintain compatibility
         description: subjectDescriptions[subject.name] || `Study materials for ${subject.name}`,
         icon: subjectIcons[subject.name] || 'BookOpen',
         href: `#${subject.name.toLowerCase().replace(/\s+/g, '-')}`
@@ -126,7 +128,6 @@ export const useDashboard = () => {
     } catch (error) {
       console.error('Error fetching subjects:', error);
       toast.error('Failed to load subjects');
-      // Fallback to empty array if there's an error
       setSubjects([]);
     }
   };

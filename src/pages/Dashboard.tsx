@@ -1,4 +1,3 @@
-
 import { Cpu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,7 +27,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
       <Sidebar 
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -37,17 +35,14 @@ const Dashboard = () => {
         onSavedClick={handleSavedClick}
       />
       
-      {/* Mobile Navigation */}
       <MobileNav 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         onSettingsClick={handleSettingsClick} 
       />
       
-      {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <header className="mb-8">
             {isLoading ? (
               <>
@@ -66,7 +61,6 @@ const Dashboard = () => {
             )}
           </header>
           
-          {/* Quick Stats */}
           <UserStats isLoading={isLoading} statsData={userStats} />
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -82,6 +76,7 @@ const Dashboard = () => {
                   <SubjectCard
                     key={subject.id}
                     title={subject.title}
+                    name={subject.name}
                     description={subject.description}
                     icon={
                       subject.icon === 'BarChart' ? (
@@ -97,8 +92,8 @@ const Dashboard = () => {
                         </svg>
                       ) : subject.icon === 'BookOpen' ? (
                         <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                          <path d="M2 3h6a4 4 0 0 1 4 4v16a3 3 0 0 0-3-3H2z"></path>
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v16a3 3 0 0 1 3-3h7z"></path>
                         </svg>
                       ) : (
                         <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -110,7 +105,7 @@ const Dashboard = () => {
                         </svg>
                       )
                     }
-                    href={`#${subject.title.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`#${(subject.title || subject.name).toLowerCase().replace(/\s+/g, '-')}`}
                   />
                 ))}
               </div>

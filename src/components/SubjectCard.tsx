@@ -6,17 +6,18 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface SubjectCardProps {
-  title: string;
+  title?: string;
+  name: string;
   description: string;
   icon: ReactNode;
   href: string;
   className?: string;
 }
 
-const SubjectCard = ({ title, description, icon, href, className }: SubjectCardProps) => {
+const SubjectCard = ({ title, name, description, icon, href, className }: SubjectCardProps) => {
   const handleSubjectClick = () => {
     // Show a toast notification when a subject is clicked
-    toast.info(`${title} selected. Content will be available soon.`);
+    toast.info(`${title || name} selected. Content will be available soon.`);
   };
 
   return (
@@ -32,7 +33,7 @@ const SubjectCard = ({ title, description, icon, href, className }: SubjectCardP
             {icon}
           </div>
           <h3 className="text-lg font-semibold mb-2 transition-colors group-hover:text-purple-600">
-            {title}
+            {title || name}
           </h3>
           <p className="text-sm text-muted-foreground">{description}</p>
         </CardContent>
