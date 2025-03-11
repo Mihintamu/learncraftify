@@ -61,28 +61,37 @@ const ContentRequestForm = () => {
     setGeneratedContent('');
     
     try {
-      // First, let's try using a mock response to show immediate progress
-      const mockContent = `Generating content for "${formData.topic}" in ${formData.subject}...\n\nPlease wait while we process your request. This may take a few moments.`;
-      setGeneratedContent(mockContent);
+      // Show a loading state
+      toast.info('Generating content...');
+      const loadingContent = `Generating content for "${formData.topic}" in ${formData.subject}...\n\nPlease wait while we process your request.`;
+      setGeneratedContent(loadingContent);
       
-      // Begin actual request to edge function
-      console.log('Sending request to generate-content with:', {
+      // Prepare the request data
+      console.log('Preparing to send request to generate-content with:', {
         subject: formData.subject,
         topic: formData.topic,
         instructions: formData.instructions
       });
       
-      const { data, error } = await supabase.functions.invoke('generate-content', {
+      // Make the request with a timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
+      );
+      
+      const responsePromise = supabase.functions.invoke('generate-content', {
         body: {
           subject: formData.subject,
           topic: formData.topic,
           instructions: formData.instructions
         }
       });
+      
+      // Race between the request and the timeout
+      const { data, error } = await Promise.race([responsePromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(error.message);
+        throw new Error(`Failed to send a request to the Edge Function: ${error.message}`);
       }
       
       if (data && data.error) {
@@ -96,15 +105,15 @@ const ContentRequestForm = () => {
         toast.success('Content generated successfully');
       } else {
         // Fallback content if no data
-        setGeneratedContent(`# ${formData.topic}\n\nThis is a placeholder for generated content.\nThe AI model is currently being configured.\n\nYour request details:\n- Subject: ${formData.subject}\n- Topic: ${formData.topic}\n- Additional instructions: ${formData.instructions || 'None provided'}`);
-        toast.info('Using placeholder content while AI system is being configured');
+        setGeneratedContent(`# ${formData.topic}\n\nThis is a placeholder for generated content.\nWe couldn't retrieve specific content for your request.\n\nYour request details:\n- Subject: ${formData.subject}\n- Topic: ${formData.topic}\n- Additional instructions: ${formData.instructions || 'None provided'}`);
+        toast.warning('Using placeholder content - no specific content was found');
       }
     } catch (error) {
       console.error('Error generating content:', error);
       toast.error('Failed to generate content. Please try again later.');
       
       // Provide a more helpful error message
-      setGeneratedContent(`Error generating content:\n\n${error.message}\n\nPlease try again later or contact support.`);
+      setGeneratedContent(`Error generating content:\n\n${error.message || 'Unknown error'}\n\nPlease try again later or contact support.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -164,10 +173,11 @@ const ContentRequestForm = () => {
                   ))
                 ) : (
                   <>
-                    <SelectItem value="mathematics">Mathematics</SelectItem>
-                    <SelectItem value="computerScience">Computer Science</SelectItem>
-                    <SelectItem value="physics">Physics</SelectItem>
-                    <SelectItem value="literature">Literature</SelectItem>
+                    <SelectItem value="Mathematics">Mathematics</SelectItem>
+                    <SelectItem value="Computer Science">Computer Science</SelectItem>
+                    <SelectItem value="Physics">Physics</SelectItem>
+                    <SelectItem value="Literature">Literature</SelectItem>
+                    <SelectItem value="Financial Accounting">Financial Accounting</SelectItem>
                   </>
                 )}
               </SelectContent>
