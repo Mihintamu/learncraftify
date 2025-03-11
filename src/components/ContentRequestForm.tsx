@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from 'sonner';
 import ContentRequestFields from './content/ContentRequestFields';
 import GeneratedContentDisplay from './content/GeneratedContentDisplay';
-import { generateContent } from '@/utils/contentGenerationService';
+import { generateContent, createFallbackContent } from '@/utils/contentGenerationService';
 import type { FormData } from './content/ContentRequestFields';
 
 const ContentRequestForm = () => {
@@ -39,21 +39,39 @@ const ContentRequestForm = () => {
       const loadingContent = `Generating content for "${formData.topic}" in ${formData.subject}...\n\nPlease wait while we process your request.`;
       setGeneratedContent(loadingContent);
       
+      // Log the form data being sent
+      console.log('Submitting form data for content generation:', formData);
+      
       // Generate content
-      const result = await generateContent(formData);
+      const result = await generateContent({
+        subject: formData.subject.trim(),
+        topic: formData.topic.trim(),
+        instructions: formData.instructions.trim()
+      });
       
       if (result.error) {
+        console.error('Content generation error:', result.error);
         setError(result.error);
-      }
-      
-      // Update with real content
-      setGeneratedContent(result.content);
-      
-      if (!result.error) {
-        toast.success('Content generated successfully');
+        toast.error('Error generating content');
       } else {
-        toast.warning('Content generated with some issues');
+        console.log('Content generated successfully');
+        toast.success('Content generated successfully');
       }
+      
+      // Check if we have content, otherwise use fallback
+      if (result.content) {
+        setGeneratedContent(result.content);
+      } else {
+        console.warn('Using fallback content');
+        setGeneratedContent(createFallbackContent(formData));
+      }
+      
+    } catch (err: any) {
+      console.error('Unexpected error during content generation:', err);
+      const errorMessage = err.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      setGeneratedContent(createFallbackContent(formData));
+      toast.error('Failed to generate content');
     } finally {
       setIsSubmitting(false);
     }

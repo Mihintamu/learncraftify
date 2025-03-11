@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import pdfParse from 'npm:pdf-parse'
@@ -19,9 +20,11 @@ function createResponse(body: any, status = 200) {
 
 async function handleRequest(req: Request) {
   try {
+    // Log request method and headers for debugging
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
+    // Validate content-type
     const contentType = req.headers.get('content-type');
     if (!contentType || !contentType.toLowerCase().includes('application/json')) {
       console.error('Invalid content-type:', contentType);
@@ -30,35 +33,46 @@ async function handleRequest(req: Request) {
       }, 400);
     }
 
-    let requestBody;
+    // Get the request body as text first for debugging
+    let requestBodyText: string;
     try {
-      requestBody = await req.text();
-      console.log('Raw request body:', requestBody);
-
-      if (!requestBody || requestBody.trim() === '') {
+      requestBodyText = await req.text();
+      console.log('Raw request body length:', requestBodyText?.length);
+      console.log('Raw request body:', requestBodyText);
+      
+      if (!requestBodyText || requestBodyText.trim() === '') {
         console.error('Empty request body');
         return createResponse({
           error: 'Empty request body'
         }, 400);
       }
-    } catch (error) {
-      console.error('Error reading request body:', error);
+    } catch (error: any) {
+      console.error('Error reading request body as text:', error);
       return createResponse({
         error: `Failed to read request body: ${error.message}`
       }, 400);
     }
 
+    // Parse the body as JSON
     let requestData;
     try {
-      requestData = JSON.parse(requestBody);
+      requestData = JSON.parse(requestBodyText);
       console.log('Parsed request data:', requestData);
-    } catch (error) {
+      
+      if (!requestData || Object.keys(requestData).length === 0) {
+        console.error('Empty JSON object after parsing');
+        return createResponse({
+          error: 'Empty JSON object after parsing'
+        }, 400);
+      }
+    } catch (error: any) {
       console.error('JSON parse error:', error);
       return createResponse({
         error: `Invalid JSON: ${error.message}`
       }, 400);
     }
 
+    // Check required fields
     const { subject, topic, instructions } = requestData;
     if (!subject || !topic) {
       console.error('Missing required fields:', { subject, topic });
@@ -156,7 +170,7 @@ async function handleRequest(req: Request) {
     console.log('Successfully generated content')
     return createResponse({ content: generatedContent })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing request:', error);
     return createResponse({ 
       error: `Error processing request: ${error.message}` 
@@ -165,13 +179,14 @@ async function handleRequest(req: Request) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     return await handleRequest(req)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unhandled error:', error);
     return createResponse({ 
       error: `Unhandled error: ${error.message}` 

@@ -29,12 +29,22 @@ export const generateContent = async (
   }
   
   try {
+    // Create a clean request object
+    const cleanRequestData = {
+      subject: requestData.subject.trim(),
+      topic: requestData.topic.trim(),
+      instructions: requestData.instructions ? requestData.instructions.trim() : ''
+    };
+    
     // Validate that the data can be properly stringified
     let requestBody: string;
     try {
-      requestBody = JSON.stringify(requestData);
-      if (!requestBody) throw new Error('Failed to stringify request data');
-    } catch (e) {
+      requestBody = JSON.stringify(cleanRequestData);
+      console.log('Stringified request body:', requestBody);
+      if (!requestBody || requestBody === '{}' || requestBody === 'null') {
+        throw new Error('Failed to stringify request data or resulted in empty object');
+      }
+    } catch (e: any) {
       throw new Error(`Invalid request data: ${e.message}`);
     }
 
