@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -59,8 +59,10 @@ const Navbar = () => {
           to="/"
           className="flex items-center gap-2 text-xl font-semibold text-foreground"
         >
-          <span className="bg-purple-500 text-white p-1 rounded">LC</span>
-          <span className="tracking-tight">LearnCraftify</span>
+          <span className="bg-purple-500 text-white p-1 rounded">
+            <Cpu className="h-5 w-5" />
+          </span>
+          <span className="tracking-tight">SenpAI</span>
         </Link>
 
         {/* Desktop Navigation */}
