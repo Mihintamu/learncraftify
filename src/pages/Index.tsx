@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Cpu, GraduationCap, FileText, Users, Star } from 'lucide-react';
@@ -223,4 +224,32 @@ const Index = () => {
                   { name: "Terms of Service", path: "/terms-of-service" }
                 ]
               }
+            ].map((group, index) => (
+              <div key={index}>
+                <h4 className="font-semibold mb-4">{group.title}</h4>
+                <ul className="space-y-2">
+                  {group.links.map((link, linkIndex) => (
+                    <li key={linkIndex}>
+                      <Link
+                        to={link.path}
+                        className="text-gray-600 hover:text-purple-600 text-sm transition-colors"
+                      >
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
+            © {new Date().getFullYear()} LearnCraftify. All rights reserved.
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
 
+export default Index;
