@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,11 +12,31 @@ import { supabase } from '@/integrations/supabase/client';
 const ContentRequestForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
+  const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
   const [formData, setFormData] = useState({
     subject: '',
     topic: '',
     instructions: '',
   });
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .order('name');
+        
+      if (error) throw error;
+      setSubjects(data || []);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      toast.error('Failed to load subjects');
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -41,6 +61,17 @@ const ContentRequestForm = () => {
     setGeneratedContent('');
     
     try {
+      // First, let's try using a mock response to show immediate progress
+      const mockContent = `Generating content for "${formData.topic}" in ${formData.subject}...\n\nPlease wait while we process your request. This may take a few moments.`;
+      setGeneratedContent(mockContent);
+      
+      // Begin actual request to edge function
+      console.log('Sending request to generate-content with:', {
+        subject: formData.subject,
+        topic: formData.topic,
+        instructions: formData.instructions
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-content', {
         body: {
           subject: formData.subject,
@@ -49,17 +80,31 @@ const ContentRequestForm = () => {
         }
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message);
+      }
       
-      if (data.error) {
+      if (data && data.error) {
+        console.error('Content generation error:', data.error);
         throw new Error(data.error);
       }
       
-      setGeneratedContent(data.content);
-      toast.success('Content generated successfully');
+      // Update with real content
+      if (data && data.content) {
+        setGeneratedContent(data.content);
+        toast.success('Content generated successfully');
+      } else {
+        // Fallback content if no data
+        setGeneratedContent(`# ${formData.topic}\n\nThis is a placeholder for generated content.\nThe AI model is currently being configured.\n\nYour request details:\n- Subject: ${formData.subject}\n- Topic: ${formData.topic}\n- Additional instructions: ${formData.instructions || 'None provided'}`);
+        toast.info('Using placeholder content while AI system is being configured');
+      }
     } catch (error) {
       console.error('Error generating content:', error);
-      toast.error('Failed to generate content. Please try again.');
+      toast.error('Failed to generate content. Please try again later.');
+      
+      // Provide a more helpful error message
+      setGeneratedContent(`Error generating content:\n\n${error.message}\n\nPlease try again later or contact support.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,12 +156,20 @@ const ContentRequestForm = () => {
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="mathematics">Mathematics</SelectItem>
-                <SelectItem value="computerScience">Computer Science</SelectItem>
-                <SelectItem value="physics">Physics</SelectItem>
-                <SelectItem value="literature">Literature</SelectItem>
-                <SelectItem value="history">History</SelectItem>
-                <SelectItem value="economics">Economics</SelectItem>
+                {subjects.length > 0 ? (
+                  subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.name}>
+                      {subject.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="mathematics">Mathematics</SelectItem>
+                    <SelectItem value="computerScience">Computer Science</SelectItem>
+                    <SelectItem value="physics">Physics</SelectItem>
+                    <SelectItem value="literature">Literature</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

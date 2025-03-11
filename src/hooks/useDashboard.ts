@@ -1,62 +1,25 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const subjects = [
-  {
-    id: 1,
-    title: 'Mathematics',
-    description: 'Calculus, Algebra, Statistics, and more',
-    icon: 'BarChart',
-    href: '#'
-  },
-  {
-    id: 2,
-    title: 'Computer Science',
-    description: 'Programming, Algorithms, Data Structures',
-    icon: 'Book',
-    href: '#'
-  },
-  {
-    id: 3,
-    title: 'Physics',
-    description: 'Mechanics, Thermodynamics, Electromagnetism',
-    icon: 'BookOpen',
-    href: '#'
-  },
-  {
-    id: 4,
-    title: 'Literature',
-    description: 'Essays, Analysis, Research Papers',
-    icon: 'FileText',
-    href: '#'
-  }
-];
+// Types for our data
+interface Subject {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  href: string;
+}
 
-const recentActivityData = [
-  {
-    id: 1,
-    title: 'Physics Assignment',
-    subject: 'Physics',
-    date: '2 hours ago',
-    type: 'assignment' as const
-  },
-  {
-    id: 2,
-    title: 'Calculus Notes',
-    subject: 'Mathematics',
-    date: 'Yesterday',
-    type: 'notes' as const
-  },
-  {
-    id: 3,
-    title: 'Data Structures Review',
-    subject: 'Computer Science',
-    date: '3 days ago',
-    type: 'notes' as const
-  }
-];
+interface ActivityItem {
+  id: number;
+  title: string;
+  subject: string;
+  date: string;
+  type: 'assignment' | 'notes';
+}
 
 export const useDashboard = () => {
   const navigate = useNavigate();
@@ -64,6 +27,8 @@ export const useDashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [recentActivityData, setRecentActivityData] = useState<ActivityItem[]>([]);
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -76,6 +41,8 @@ export const useDashboard = () => {
       }
       
       fetchUserData(session.user.id);
+      fetchSubjects();
+      fetchRecentActivity();
     };
     
     checkAuth();
@@ -108,6 +75,80 @@ export const useDashboard = () => {
       toast.error('Failed to load user data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      
+      // Map the subjects data to include icons and descriptions
+      const subjectIcons = {
+        'Mathematics': 'BarChart',
+        'Computer Science': 'Book',
+        'Physics': 'BookOpen',
+        'Literature': 'FileText',
+        'Financial Accounting': 'Calculator',
+        'Engineering': 'Tool',
+        'Biology': 'Leaf',
+        'Chemistry': 'Flask',
+        'Economics': 'TrendingUp',
+        'History': 'Clock'
+      };
+
+      const subjectDescriptions = {
+        'Mathematics': 'Calculus, Algebra, Statistics, and more',
+        'Computer Science': 'Programming, Algorithms, Data Structures',
+        'Physics': 'Mechanics, Thermodynamics, Electromagnetism',
+        'Literature': 'Essays, Analysis, Research Papers',
+        'Financial Accounting': 'Financial statements, Auditing, Taxation',
+        'Engineering': 'Mechanical, Electrical, Civil engineering topics',
+        'Biology': 'Anatomy, Genetics, Ecology, and more',
+        'Chemistry': 'Organic, Inorganic, Physical chemistry',
+        'Economics': 'Microeconomics, Macroeconomics, Finance',
+        'History': 'Ancient, Modern, World history'
+      };
+      
+      const mappedSubjects = data?.map(subject => ({
+        id: subject.id,
+        title: subject.name,
+        description: subjectDescriptions[subject.name] || `Study materials for ${subject.name}`,
+        icon: subjectIcons[subject.name] || 'BookOpen',
+        href: `#${subject.name.toLowerCase().replace(/\s+/g, '-')}`
+      })) || [];
+      
+      setSubjects(mappedSubjects);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      toast.error('Failed to load subjects');
+      // Fallback to empty array if there's an error
+      setSubjects([]);
+    }
+  };
+
+  const fetchRecentActivity = async () => {
+    try {
+      // In a real implementation, you would fetch actual activity data
+      // For now, we'll use placeholder data since we don't have an activity table yet
+      const activityData = [
+        {
+          id: 1,
+          title: 'Recent Content Request',
+          subject: 'General',
+          date: new Date().toLocaleDateString(),
+          type: 'notes' as const
+        }
+      ];
+      
+      setRecentActivityData(activityData);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      setRecentActivityData([]);
     }
   };
   

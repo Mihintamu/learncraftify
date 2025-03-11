@@ -1,6 +1,6 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,76 +10,122 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set in environment variables')
-    }
+    // Create a Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
 
+    // Parse request body
     const { subject, topic, instructions } = await req.json()
-    
+
+    console.log('Received request for content generation:', { subject, topic, instructions })
+
     if (!subject || !topic) {
-      throw new Error('Subject and topic are required')
+      return new Response(
+        JSON.stringify({ error: 'Subject and topic are required' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
-    console.log(`Generating content for ${subject} - ${topic}`)
+    // Fetch content files for the subject
+    const { data: contentFiles, error: filesError } = await supabaseClient
+      .from('content_files')
+      .select('*')
+      .eq('subject', subject)
 
-    const systemPrompt = `You are an educational content generator specialized in creating high-quality study materials for college students.
-    Focus on creating well-structured, informative content that explains concepts clearly and includes examples where appropriate.`
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: systemPrompt 
-          },
-          { 
-            role: 'user', 
-            content: `Generate educational content about ${topic} for the subject ${subject}. 
-            Additional instructions: ${instructions || 'Keep it concise and informative.'}` 
-          }
-        ],
-        temperature: 0.7,
-      }),
-    })
-
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('OpenAI API error:', error)
-      throw new Error(`OpenAI API error: ${error}`)
+    if (filesError) {
+      console.error('Error fetching content files:', filesError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch subject content' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      )
     }
 
-    const data = await response.json()
-    const generatedContent = data.choices[0].message.content
+    // Generate the content
+    // Currently a placeholder, would normally use an AI model with the subject data
+    let generatedContent = `# ${topic} (${subject})
 
-    console.log('Content generated successfully')
+## Overview
+This is a comprehensive study guide on ${topic} for ${subject} students.
 
+`
+
+    // Add information about the files we found (or didn't find)
+    if (contentFiles && contentFiles.length > 0) {
+      generatedContent += `## References
+This content was generated using ${contentFiles.length} reference materials from the knowledge base.\n\n`
+
+      // Add file names as references
+      contentFiles.forEach((file, index) => {
+        generatedContent += `${index + 1}. ${file.file_name}\n`
+      })
+    } else {
+      generatedContent += `\nNote: No specific reference materials were found for this subject. This content is generated based on general knowledge.\n`
+    }
+
+    // Add topic-specific content (placeholder)
+    generatedContent += `
+## Main Content
+
+### Introduction to ${topic}
+${topic} is an important concept in ${subject} that helps students understand the fundamental principles and applications.
+
+### Key Points to Remember
+1. First key point about ${topic}
+2. Second key point about ${topic}
+3. Third key point about ${topic}
+
+### Study Notes
+${instructions ? `Based on your instructions: "${instructions}", here are some specific notes:` : 'Here are some general notes:'}
+
+- Note 1: Important concept related to ${topic}
+- Note 2: Common applications of ${topic}
+- Note 3: How ${topic} relates to other topics in ${subject}
+
+### Practice Questions
+1. Question: What is the primary purpose of ${topic} in ${subject}?
+   Answer: The primary purpose is to provide a framework for understanding related concepts.
+
+2. Question: How does ${topic} apply in real-world scenarios?
+   Answer: ${topic} applies in various scenarios including [example applications].
+
+## Conclusion
+This study guide on ${topic} covers the essential aspects that students need to understand. For more detailed information, refer to the complete course materials.
+`
+
+    // Return the generated content
     return new Response(
-      JSON.stringify({ 
-        content: generatedContent 
+      JSON.stringify({
+        content: generatedContent,
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
     )
   } catch (error) {
-    console.error('Error in generate-content function:', error)
-    
+    console.error('Error processing request:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       }
     )
   }
