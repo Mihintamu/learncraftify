@@ -20,13 +20,34 @@ function createResponse(body: any, status = 200) {
 
 async function handleRequest(req: Request) {
   try {
-    const requestData = await req.json()
-    console.log('Received request data:', JSON.stringify(requestData))
+    // Check if the request body is empty
+    const bodyText = await req.text();
+    if (!bodyText || bodyText.trim() === '') {
+      console.error('Empty request body received');
+      return createResponse({
+        error: 'Empty request body received'
+      }, 400);
+    }
+
+    // Parse JSON safely
+    let requestData;
+    try {
+      requestData = JSON.parse(bodyText);
+      console.log('Received request data:', JSON.stringify(requestData));
+    } catch (jsonError) {
+      console.error('Invalid JSON in request body:', bodyText, jsonError);
+      return createResponse({
+        error: `Invalid JSON in request body: ${jsonError.message}`
+      }, 400);
+    }
     
-    const { subject, topic, instructions } = requestData
+    const { subject, topic, instructions } = requestData;
     
     if (!subject || !topic) {
-      throw new Error('Subject and topic are required')
+      console.error('Missing required fields:', { subject, topic });
+      return createResponse({
+        error: 'Subject and topic are required'
+      }, 400);
     }
     
     // Create Supabase client

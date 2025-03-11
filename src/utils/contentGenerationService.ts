@@ -18,6 +18,16 @@ export const generateContent = async (
 ): Promise<ContentGenerationResponse> => {
   console.log('Preparing to send request to generate-content with:', requestData);
   
+  // Validate request data before sending
+  if (!requestData.subject || !requestData.topic) {
+    const errorMsg = 'Subject and topic are required fields';
+    console.error(errorMsg, requestData);
+    return { 
+      content: `Error: ${errorMsg}`,
+      error: errorMsg
+    };
+  }
+  
   try {
     console.log('Sending request to Edge Function...');
     const { data, error } = await supabase.functions.invoke('generate-content', {
