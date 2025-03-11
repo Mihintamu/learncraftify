@@ -6,10 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, Copy, Download } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const ContentRequestForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState('');
   const [formData, setFormData] = useState({
     subject: '',
     topic: '',
@@ -30,32 +32,61 @@ const ContentRequestForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.subject || !formData.topic || !formData.instructions) {
-      toast.error('Please fill out all fields');
+    if (!formData.subject || !formData.topic) {
+      toast.error('Please fill out the subject and topic fields');
       return;
     }
     
     setIsSubmitting(true);
+    setGeneratedContent('');
     
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      toast.success('Content request submitted successfully');
-      console.log('Form data submitted:', formData);
-      
-      // Reset form
-      setFormData({
-        subject: '',
-        topic: '',
-        instructions: '',
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: {
+          subject: formData.subject,
+          topic: formData.topic,
+          instructions: formData.instructions
+        }
       });
+
+      if (error) throw new Error(error.message);
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setGeneratedContent(data.content);
+      toast.success('Content generated successfully');
     } catch (error) {
-      toast.error('Failed to submit request. Please try again.');
-      console.error(error);
+      console.error('Error generating content:', error);
+      toast.error('Failed to generate content. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopyContent = () => {
+    if (!generatedContent) return;
+    
+    navigator.clipboard.writeText(generatedContent)
+      .then(() => toast.success('Content copied to clipboard'))
+      .catch(() => toast.error('Failed to copy content'));
+  };
+
+  const handleDownloadContent = () => {
+    if (!generatedContent) return;
+    
+    const blob = new Blob([generatedContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formData.subject}_${formData.topic}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Content downloaded');
   };
 
   return (
@@ -137,6 +168,33 @@ const ContentRequestForm = () => {
             </Button>
           </div>
         </form>
+
+        {generatedContent && (
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Generated Content</h3>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCopyContent}
+                >
+                  <Copy className="h-4 w-4 mr-1" /> Copy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadContent}
+                >
+                  <Download className="h-4 w-4 mr-1" /> Download
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 bg-muted rounded-md whitespace-pre-wrap text-sm max-h-96 overflow-y-auto">
+              {generatedContent}
+            </div>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-center border-t px-6 py-4">
         <p className="text-xs text-muted-foreground text-center">
