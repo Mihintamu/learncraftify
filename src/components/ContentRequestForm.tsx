@@ -61,8 +61,20 @@ const ContentRequestForm = () => {
 
   const handleRetry = () => {
     setError('');
-    // Use a proper FormEvent for the retry
-    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    // Create a proper synthetic FormEvent
+    const syntheticEvent = {
+      preventDefault: () => {},
+      target: null,
+      currentTarget: null,
+      bubbles: false,
+      cancelable: false,
+      defaultPrevented: false,
+      eventPhase: 0,
+      isTrusted: false,
+      timeStamp: Date.now(),
+      type: 'submit',
+    } as React.FormEvent;
+    
     handleSubmit(syntheticEvent);
   };
 

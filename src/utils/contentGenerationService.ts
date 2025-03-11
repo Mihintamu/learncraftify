@@ -13,6 +13,10 @@ export interface ContentGenerationResponse {
   error?: string;
 }
 
+type RaceResult = 
+  | { type: 'response'; data: { data: any; error: any } }
+  | { type: 'timeout' };
+
 export const generateContent = async (
   requestData: ContentGenerationRequest
 ): Promise<ContentGenerationResponse> => {
@@ -20,26 +24,23 @@ export const generateContent = async (
   
   try {
     // Make the request with a timeout
-    const timeoutPromise = new Promise<never>((_, reject) => 
+    const timeoutPromise = new Promise<RaceResult>((_, reject) => 
       setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000)
     );
     
     const responsePromise = supabase.functions.invoke('generate-content', {
       body: requestData
-    });
+    }).then(res => ({ type: 'response', data: res } as RaceResult));
     
     // Race between the request and the timeout
-    const result: any = await Promise.race([
-      responsePromise.then(res => ({ type: 'response', data: res })),
-      timeoutPromise.then(() => ({ type: 'timeout' }))
-    ]);
+    const result = await Promise.race([responsePromise, timeoutPromise]);
     
     if (result.type === 'timeout') {
       throw new Error('Request timed out after 30 seconds. The server might be busy.');
     }
     
-    // Check if result has data property (when it's the response type)
-    if (result.type === 'response' && result.data) {
+    // Now TypeScript knows result.data exists when type is 'response'
+    if (result.type === 'response') {
       const { data, error } = result.data;
 
       if (error) {
