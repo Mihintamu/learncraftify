@@ -6,12 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { FileText, Loader2, Copy, Download } from 'lucide-react';
+import { FileText, Loader2, Copy, Download, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ContentRequestForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
+  const [error, setError] = useState('');
   const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
   const [formData, setFormData] = useState({
     subject: '',
@@ -59,6 +60,7 @@ const ContentRequestForm = () => {
     
     setIsSubmitting(true);
     setGeneratedContent('');
+    setError('');
     
     try {
       // Show a loading state
@@ -87,11 +89,20 @@ const ContentRequestForm = () => {
       });
       
       // Race between the request and the timeout
-      const { data, error } = await Promise.race([responsePromise, timeoutPromise]) as any;
+      const result = await Promise.race([
+        responsePromise.then(res => ({ type: 'response', data: res })),
+        timeoutPromise.then(() => ({ type: 'timeout' }))
+      ]);
+      
+      if (result.type === 'timeout') {
+        throw new Error('Request timed out after 30 seconds. The server might be busy.');
+      }
+      
+      const { data, error } = result.data;
 
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(`Failed to send a request to the Edge Function: ${error.message}`);
+        throw new Error(`Failed to send a request to the Edge Function: ${error.message || error}`);
       }
       
       if (data && data.error) {
@@ -111,6 +122,9 @@ const ContentRequestForm = () => {
     } catch (error) {
       console.error('Error generating content:', error);
       toast.error('Failed to generate content. Please try again later.');
+      
+      // Set error state for more visible feedback
+      setError(error.message || 'Unknown error occurred');
       
       // Provide a more helpful error message
       setGeneratedContent(`Error generating content:\n\n${error.message || 'Unknown error'}\n\nPlease try again later or contact support.`);
@@ -141,6 +155,11 @@ const ContentRequestForm = () => {
     URL.revokeObjectURL(url);
     
     toast.success('Content downloaded');
+  };
+
+  const handleRetry = () => {
+    setError('');
+    handleSubmit(new Event('submit') as React.FormEvent);
   };
 
   return (
@@ -231,6 +250,24 @@ const ContentRequestForm = () => {
             </Button>
           </div>
         </form>
+
+        {error && (
+          <div className="mt-6 p-4 border border-red-200 bg-red-50 rounded-md">
+            <div className="flex items-center mb-2">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <h3 className="text-md font-medium text-red-800">Error occurred</h3>
+            </div>
+            <p className="text-sm text-red-700">{error}</p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2"
+              onClick={handleRetry}
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
 
         {generatedContent && (
           <div className="mt-8 space-y-4">

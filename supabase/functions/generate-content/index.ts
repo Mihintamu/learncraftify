@@ -29,20 +29,33 @@ serve(async (req) => {
     )
 
     // Parse request body
-    const requestData = await req.json()
-    const { subject, topic, instructions } = requestData
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('Received request data:', JSON.stringify(requestData));
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format: ' + parseError.message }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
     
-    console.log('Received request with data:', requestData)
-
+    const { subject, topic, instructions } = requestData;
+    
+    // Validate required fields
     if (!subject || !topic) {
-      console.error('Missing required fields: subject or topic')
+      console.error('Missing required fields: subject or topic');
       return new Response(
         JSON.stringify({ error: 'Subject and topic are required' }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         }
-      )
+      );
     }
 
     // Generate a fallback content in case we can't find any relevant materials
@@ -67,14 +80,14 @@ Consider exploring online educational platforms for more information on this top
 
     try {
       // Fetch content files for the subject
-      console.log(`Fetching content files for subject: ${subject}`)
+      console.log(`Fetching content files for subject: ${subject}`);
       const { data: contentFiles, error: filesError } = await supabaseClient
         .from('content_files')
         .select('*')
-        .eq('subject', subject)
+        .eq('subject', subject);
 
       if (filesError) {
-        console.error('Error fetching content files:', filesError)
+        console.error('Error fetching content files:', filesError);
         // Return fallback content instead of failing
         return new Response(
           JSON.stringify({ content: fallbackContent }),
@@ -82,92 +95,92 @@ Consider exploring online educational platforms for more information on this top
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           }
-        )
+        );
       }
 
       if (!contentFiles || contentFiles.length === 0) {
-        console.log(`No content files found for subject: ${subject}`)
+        console.log(`No content files found for subject: ${subject}`);
         return new Response(
           JSON.stringify({ content: fallbackContent }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           }
-        )
+        );
       }
 
-      console.log(`Found ${contentFiles.length} content files for subject: ${subject}`)
+      console.log(`Found ${contentFiles.length} content files for subject: ${subject}`);
       
       // Parse and extract content from files
-      let fileContents = []
+      let fileContents = [];
       for (const file of contentFiles) {
         try {
-          console.log(`Processing file: ${file.file_name}`)
+          console.log(`Processing file: ${file.file_name}`);
           
           // Download file from storage
           const { data: fileData, error: downloadError } = await supabaseClient
             .storage
             .from('content_files')
-            .download(`${subject}/${file.file_name}`)
+            .download(`${subject}/${file.file_name}`);
 
           if (downloadError) {
-            console.error(`Error downloading file ${file.file_name}:`, downloadError)
-            continue
+            console.error(`Error downloading file ${file.file_name}:`, downloadError);
+            continue;
           }
 
           if (!fileData) {
-            console.error(`No data found for file ${file.file_name}`)
-            continue
+            console.error(`No data found for file ${file.file_name}`);
+            continue;
           }
 
           // Convert file to ArrayBuffer
-          const arrayBuffer = await fileData.arrayBuffer()
+          const arrayBuffer = await fileData.arrayBuffer();
           
           // Parse PDF content
           if (file.file_type.toLowerCase() === 'pdf') {
-            console.log(`Parsing PDF: ${file.file_name}`)
+            console.log(`Parsing PDF: ${file.file_name}`);
             try {
-              const pdfData = await parsePdf(new Uint8Array(arrayBuffer))
+              const pdfData = await parsePdf(new Uint8Array(arrayBuffer));
               fileContents.push({
                 title: file.file_name,
                 content: pdfData.text
-              })
-              console.log(`Successfully parsed PDF: ${file.file_name}`)
+              });
+              console.log(`Successfully parsed PDF: ${file.file_name}`);
             } catch (pdfError) {
-              console.error(`Error parsing PDF ${file.file_name}:`, pdfError)
+              console.error(`Error parsing PDF ${file.file_name}:`, pdfError);
             }
           }
         } catch (fileError) {
-          console.error(`Error processing file ${file.file_name}:`, fileError)
+          console.error(`Error processing file ${file.file_name}:`, fileError);
         }
       }
 
       // Check if we have any parsed content
       if (fileContents.length === 0) {
-        console.log('No files were successfully parsed')
+        console.log('No files were successfully parsed');
         return new Response(
           JSON.stringify({ content: fallbackContent }),
           {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           }
-        )
+        );
       }
 
       // Prepare content based on parsed files and topic
-      let relevantContent = ''
-      const searchTopic = topic.toLowerCase()
+      let relevantContent = '';
+      const searchTopic = topic.toLowerCase();
       
       // Search through parsed content for relevant information
       for (const file of fileContents) {
-        const contentLower = file.content.toLowerCase()
+        const contentLower = file.content.toLowerCase();
         if (contentLower.includes(searchTopic)) {
           // Extract paragraphs containing the topic
-          const paragraphs = file.content.split('\n\n')
+          const paragraphs = file.content.split('\n\n');
           const relevantParagraphs = paragraphs.filter(p => 
             p.toLowerCase().includes(searchTopic)
-          )
-          relevantContent += relevantParagraphs.join('\n\n') + '\n\n'
+          );
+          relevantContent += relevantParagraphs.join('\n\n') + '\n\n';
         }
       }
 
@@ -178,26 +191,26 @@ Consider exploring online educational platforms for more information on this top
 This is a comprehensive study guide on ${topic} for ${subject} students.
 
 ## References
-This content was generated using ${contentFiles.length} reference materials from the knowledge base.\n\n`
+This content was generated using ${contentFiles.length} reference materials from the knowledge base.\n\n`;
 
       // Add file names as references
       contentFiles.forEach((file, index) => {
-        generatedContent += `${index + 1}. ${file.file_name}\n`
-      })
+        generatedContent += `${index + 1}. ${file.file_name}\n`;
+      });
 
       // Add extracted content
-      generatedContent += `\n## Main Content\n`
+      generatedContent += `\n## Main Content\n`;
       
       if (relevantContent) {
-        generatedContent += `\n### Key Concepts\n${relevantContent}\n`
+        generatedContent += `\n### Key Concepts\n${relevantContent}\n`;
       } else {
-        generatedContent += `\nNo specific content found for this topic in the knowledge base. Please ensure relevant materials are uploaded.\n`
+        generatedContent += `\nNo specific content found for this topic in the knowledge base. Please ensure relevant materials are uploaded.\n`;
       }
 
       // Add study notes based on instructions
-      generatedContent += `\n### Study Notes\n`
+      generatedContent += `\n### Study Notes\n`;
       if (instructions) {
-        generatedContent += `Based on your instructions: "${instructions}", here are some key points:\n\n`
+        generatedContent += `Based on your instructions: "${instructions}", here are some key points:\n\n`;
       }
       
       // Extract key points from relevant content
@@ -207,15 +220,15 @@ This content was generated using ${contentFiles.length} reference materials from
             .filter(line => line.trim().length > 0)
             .map(line => `- ${line.trim()}`)
             .join('\n')
-        : '- No specific points found in the knowledge base for this topic.'
+        : '- No specific points found in the knowledge base for this topic.';
       
-      generatedContent += keyPoints
+      generatedContent += keyPoints;
 
       // Add conclusion
       generatedContent += `\n\n## Conclusion
-This study guide provides an overview of ${topic} in ${subject}. For more detailed information, please refer to the referenced materials.`
+This study guide provides an overview of ${topic} in ${subject}. For more detailed information, please refer to the referenced materials.`;
 
-      console.log('Successfully generated content')
+      console.log('Successfully generated content');
       
       // Return the generated content
       return new Response(
@@ -224,9 +237,9 @@ This study guide provides an overview of ${topic} in ${subject}. For more detail
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         }
-      )
+      );
     } catch (contentError) {
-      console.error('Error processing content:', contentError)
+      console.error('Error processing content:', contentError);
       // Return fallback content on error
       return new Response(
         JSON.stringify({ content: fallbackContent }),
@@ -234,16 +247,16 @@ This study guide provides an overview of ${topic} in ${subject}. For more detail
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         }
-      )
+      );
     }
   } catch (error) {
-    console.error('Error in Edge Function:', error)
+    console.error('Error in Edge Function:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'An unknown error occurred' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    )
+    );
   }
-})
+});
