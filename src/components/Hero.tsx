@@ -65,16 +65,32 @@ const Hero = () => {
           {/* Preview image */}
           <div className="w-full max-w-4xl mx-auto relative animate-fade-up [animation-delay:600ms]">
             <div className="aspect-[16/9] rounded-xl overflow-hidden shadow-2xl">
-              <div className="bg-gray-100 w-full h-full flex items-center justify-center">
-                <div className="glass-card w-full max-w-lg mx-auto p-6 rounded-lg">
-                  <div className="h-8 w-24 bg-purple-200 rounded-full mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 w-full bg-gray-200 rounded"></div>
-                    <div className="h-4 w-full bg-gray-200 rounded"></div>
-                    <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
+              <div className="bg-gradient-to-br from-purple-50 via-white to-purple-100 w-full h-full flex items-center justify-center">
+                <div className="glass-card w-full max-w-lg mx-auto p-6 rounded-lg border border-purple-200/50 shadow-lg backdrop-blur-md bg-white/70 relative">
+                  {/* Decorative elements */}
+                  <div className="absolute -top-2 -left-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse-subtle"></div>
+                  <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse-subtle [animation-delay:400ms]"></div>
+                  <div className="absolute top-1/2 -right-2 w-3 h-3 bg-purple-300 rounded-full animate-pulse-subtle [animation-delay:600ms]"></div>
+                  <div className="absolute top-1/2 -left-2 w-3 h-3 bg-purple-300 rounded-full animate-pulse-subtle [animation-delay:200ms]"></div>
+                  
+                  {/* Card header with gradient */}
+                  <div className="h-8 w-24 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full mb-4 flex items-center justify-center">
+                    <span className="text-xs text-white font-medium">AI Essay</span>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <div className="h-8 w-20 bg-purple-500 rounded"></div>
+                  
+                  {/* Content lines with different widths and subtle animation */}
+                  <div className="space-y-3">
+                    <div className="h-4 bg-gradient-to-r from-gray-200 to-purple-100 rounded animate-pulse-subtle [animation-delay:100ms]"></div>
+                    <div className="h-4 bg-gradient-to-r from-gray-200 to-purple-100 rounded animate-pulse-subtle [animation-delay:300ms]" style={{width: '95%'}}></div>
+                    <div className="h-4 bg-gradient-to-r from-gray-200 to-purple-100 rounded animate-pulse-subtle [animation-delay:500ms]" style={{width: '85%'}}></div>
+                    <div className="h-4 bg-gradient-to-r from-gray-200 to-purple-100 rounded animate-pulse-subtle [animation-delay:700ms]" style={{width: '90%'}}></div>
+                  </div>
+                  
+                  {/* Interactive button with hover effect */}
+                  <div className="mt-5 flex justify-end">
+                    <div className="h-8 w-24 bg-purple-500 hover:bg-purple-600 transition-colors duration-300 rounded-lg flex items-center justify-center cursor-pointer shadow-md">
+                      <span className="text-xs text-white font-medium">Generate</span>
+                    </div>
                   </div>
                 </div>
               </div>
