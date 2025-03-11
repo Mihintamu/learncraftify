@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart } from 'lucide-react';
+import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -90,7 +90,9 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 p-4">
         <div className="flex items-center gap-2 text-xl font-semibold px-2 py-4">
-          <span className="bg-purple-500 text-white p-1 rounded">S</span>
+          <span className="bg-purple-500 text-white p-1 rounded">
+            <Cpu className="h-5 w-5" />
+          </span>
           <span>SenpAI</span>
         </div>
         

@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield, Loader2, Cpu } from 'lucide-react';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -61,7 +61,9 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-b from-gray-900 to-purple-900">
       <Link to="/" className="flex items-center gap-2 text-xl font-semibold mb-8 text-white">
-        <span className="bg-purple-500 text-white p-1 rounded">S</span>
+        <span className="bg-purple-500 text-white p-1 rounded">
+          <Cpu className="h-5 w-5" />
+        </span>
         <span>SenpAI</span>
       </Link>
       

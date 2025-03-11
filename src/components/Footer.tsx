@@ -8,8 +8,8 @@ const footerLinks = [
     links: [
       { name: "Features", path: "/" },
       { name: "Pricing", path: "/pricing" },
-      { name: "Use Cases", path: "/" },
-      { name: "Roadmap", path: "/" }
+      { name: "How it Works", path: "/" },
+      { name: "FAQ", path: "/" }
     ]
   },
   {
@@ -18,7 +18,7 @@ const footerLinks = [
       { name: "Help Center", path: "/" },
       { name: "Blog", path: "/" },
       { name: "Tutorials", path: "/" },
-      { name: "FAQs", path: "/" }
+      { name: "Contact Us", path: "/" }
     ]
   },
   {

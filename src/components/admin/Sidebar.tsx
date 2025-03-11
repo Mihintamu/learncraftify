@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Book, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { Book, FileText, Users, Settings, LogOut, Cpu } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -14,7 +14,9 @@ const Sidebar = ({ activeTab, setActiveTab, handleLogout }: SidebarProps) => {
       {/* Sidebar */}
       <div className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="flex items-center gap-2 px-6 py-4 border-b">
-          <span className="bg-purple-500 text-white p-1 rounded">LC</span>
+          <span className="bg-purple-500 text-white p-1 rounded">
+            <Cpu className="h-5 w-5" />
+          </span>
           <span className="font-semibold">Admin Panel</span>
         </div>
         
