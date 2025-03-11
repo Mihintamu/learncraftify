@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ChevronLeft, Save, Bell, Monitor, Globe, Clock, PencilLine } from 'lucide-react';
@@ -14,21 +13,32 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+}
+
+interface UserSettings {
+  notification_preferences: NotificationPreferences;
+  theme: string;
+  language: string;
+  weekly_summary: boolean;
+  study_reminders: boolean;
+}
+
 const Settings = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  // User data
   const [profile, setProfile] = useState({
     username: '',
     full_name: '',
     avatar_url: ''
   });
   
-  // Settings data
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<UserSettings>({
     notification_preferences: {
       email: true,
       push: true
@@ -39,7 +49,6 @@ const Settings = () => {
     study_reminders: true
   });
   
-  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -56,11 +65,10 @@ const Settings = () => {
     checkAuth();
   }, [navigate]);
   
-  const fetchUserData = async (userId) => {
+  const fetchUserData = async (userId: string) => {
     try {
       setIsLoading(true);
       
-      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -69,7 +77,6 @@ const Settings = () => {
       
       if (profileError) throw profileError;
       
-      // Fetch user settings
       const { data: settingsData, error: settingsError } = await supabase
         .from('user_settings')
         .select('*')
@@ -84,15 +91,21 @@ const Settings = () => {
         avatar_url: profileData.avatar_url || ''
       });
       
+      const notificationPrefs = settingsData.notification_preferences ? 
+        (typeof settingsData.notification_preferences === 'object' ? 
+          settingsData.notification_preferences : 
+          { email: true, push: true }) : 
+        { email: true, push: true };
+      
       setSettings({
-        notification_preferences: settingsData.notification_preferences || {
-          email: true,
-          push: true
+        notification_preferences: {
+          email: notificationPrefs.email !== undefined ? Boolean(notificationPrefs.email) : true,
+          push: notificationPrefs.push !== undefined ? Boolean(notificationPrefs.push) : true
         },
         theme: settingsData.theme || 'light',
         language: settingsData.language || 'en',
-        weekly_summary: settingsData.weekly_summary !== null ? settingsData.weekly_summary : true,
-        study_reminders: settingsData.study_reminders !== null ? settingsData.study_reminders : true
+        weekly_summary: settingsData.weekly_summary !== null ? Boolean(settingsData.weekly_summary) : true,
+        study_reminders: settingsData.study_reminders !== null ? Boolean(settingsData.study_reminders) : true
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -102,7 +115,7 @@ const Settings = () => {
     }
   };
   
-  const handleProfileChange = (e) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfile(prev => ({
       ...prev,
@@ -110,7 +123,7 @@ const Settings = () => {
     }));
   };
   
-  const handleNotificationChange = (key, value) => {
+  const handleNotificationChange = (key: keyof NotificationPreferences, value: boolean) => {
     setSettings(prev => ({
       ...prev,
       notification_preferences: {
@@ -120,7 +133,7 @@ const Settings = () => {
     }));
   };
   
-  const handleSettingChange = (key, value) => {
+  const handleSettingChange = (key: keyof Omit<UserSettings, 'notification_preferences'>, value: any) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
@@ -136,7 +149,6 @@ const Settings = () => {
       
       const userId = session.user.id;
       
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -149,7 +161,6 @@ const Settings = () => {
       
       if (profileError) throw profileError;
       
-      // Update settings
       const { error: settingsError } = await supabase
         .from('user_settings')
         .update({
@@ -175,7 +186,6 @@ const Settings = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 p-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center">
@@ -205,7 +215,6 @@ const Settings = () => {
         </div>
       </header>
       
-      {/* Main Content */}
       <main className="p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
@@ -217,7 +226,6 @@ const Settings = () => {
               <TabsTrigger value="preferences">Preferences</TabsTrigger>
             </TabsList>
             
-            {/* Profile Tab */}
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
@@ -273,7 +281,6 @@ const Settings = () => {
               </Card>
             </TabsContent>
             
-            {/* Notifications Tab */}
             <TabsContent value="notifications">
               <Card>
                 <CardHeader>
@@ -344,7 +351,6 @@ const Settings = () => {
               </Card>
             </TabsContent>
             
-            {/* Preferences Tab */}
             <TabsContent value="preferences">
               <Card>
                 <CardHeader>
