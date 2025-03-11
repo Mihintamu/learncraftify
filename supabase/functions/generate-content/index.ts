@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { parse as parsePdf } from 'npm:pdf-parse'
+import pdfParse from 'npm:pdf-parse'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -85,7 +85,7 @@ async function handleRequest(req: Request) {
 
         if (file.file_type.toLowerCase() === 'pdf') {
           const arrayBuffer = await fileData.arrayBuffer()
-          const pdfData = await parsePdf(new Uint8Array(arrayBuffer))
+          const pdfData = await pdfParse(new Uint8Array(arrayBuffer))
           processedContents.push({
             title: file.file_name,
             content: pdfData.text
@@ -145,4 +145,3 @@ serve(async (req) => {
     }, 500)
   }
 })
-

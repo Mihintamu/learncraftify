@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -20,7 +21,10 @@ export const generateContent = async (
   try {
     console.log('Sending request to Edge Function...');
     const { data, error } = await supabase.functions.invoke('generate-content', {
-      body: requestData
+      body: requestData,
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
 
     console.log('Received response:', { data, error });
