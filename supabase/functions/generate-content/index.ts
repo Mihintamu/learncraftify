@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import pdfParse from 'npm:pdf-parse'
@@ -20,60 +19,54 @@ function createResponse(body: any, status = 200) {
 
 async function handleRequest(req: Request) {
   try {
-    console.log('Request received method:', req.method);
+    console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // First check if the content-type is correct
+
     const contentType = req.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
+    if (!contentType || !contentType.toLowerCase().includes('application/json')) {
       console.error('Invalid content-type:', contentType);
       return createResponse({
-        error: 'Content-Type must be application/json'
+        error: `Invalid Content-Type: ${contentType}. Expected application/json`
       }, 400);
     }
-    
-    // Clone the request to safely log the body
-    const reqClone = req.clone();
-    let requestBodyText = '';
+
+    let requestBody;
     try {
-      requestBodyText = await reqClone.text();
-      console.log('Raw request body:', requestBodyText);
-      
-      if (!requestBodyText || requestBodyText.trim() === '') {
-        console.error('Empty request body received');
+      requestBody = await req.text();
+      console.log('Raw request body:', requestBody);
+
+      if (!requestBody || requestBody.trim() === '') {
+        console.error('Empty request body');
         return createResponse({
-          error: 'Empty request body received'
+          error: 'Empty request body'
         }, 400);
       }
-    } catch (bodyError) {
-      console.error('Error reading request body:', bodyError);
+    } catch (error) {
+      console.error('Error reading request body:', error);
       return createResponse({
-        error: `Could not read request body: ${bodyError.message}`
+        error: `Failed to read request body: ${error.message}`
       }, 400);
     }
-    
-    // Parse request body as JSON
+
     let requestData;
     try {
-      requestData = JSON.parse(requestBodyText);
-      console.log('Successfully parsed request data:', JSON.stringify(requestData));
-    } catch (jsonError) {
-      console.error('Failed to parse request JSON:', jsonError);
+      requestData = JSON.parse(requestBody);
+      console.log('Parsed request data:', requestData);
+    } catch (error) {
+      console.error('JSON parse error:', error);
       return createResponse({
-        error: `Invalid JSON in request body: ${jsonError.message}`
+        error: `Invalid JSON: ${error.message}`
       }, 400);
     }
-    
+
     const { subject, topic, instructions } = requestData;
-    
     if (!subject || !topic) {
       console.error('Missing required fields:', { subject, topic });
       return createResponse({
         error: 'Subject and topic are required'
       }, 400);
     }
-    
-    // Create Supabase client
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -83,8 +76,7 @@ async function handleRequest(req: Request) {
         },
       }
     )
-    
-    // Fetch content files
+
     console.log(`Fetching content files for subject: ${subject}`)
     const { data: contentFiles, error: filesError } = await supabaseClient
       .from('content_files')
@@ -105,7 +97,6 @@ async function handleRequest(req: Request) {
       })
     }
 
-    // Process each file
     console.log(`Processing ${contentFiles.length} files`)
     const processedContents = []
     
@@ -140,7 +131,6 @@ async function handleRequest(req: Request) {
       }
     }
 
-    // Generate content from processed files
     console.log('Generating final content')
     let generatedContent = `# ${topic} (${subject})\n\n`
     
@@ -167,15 +157,14 @@ async function handleRequest(req: Request) {
     return createResponse({ content: generatedContent })
 
   } catch (error) {
-    console.error('Error processing request:', error)
+    console.error('Error processing request:', error);
     return createResponse({ 
       error: `Error processing request: ${error.message}` 
-    }, 400)
+    }, 500);
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -183,9 +172,9 @@ serve(async (req) => {
   try {
     return await handleRequest(req)
   } catch (error) {
-    console.error('Unhandled error:', error)
+    console.error('Unhandled error:', error);
     return createResponse({ 
       error: `Unhandled error: ${error.message}` 
-    }, 500)
+    }, 500);
   }
 })
