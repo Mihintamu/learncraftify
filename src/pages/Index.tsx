@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Cpu, GraduationCap, FileText, Users, Star } from 'lucide-react';
@@ -199,42 +198,29 @@ const Index = () => {
             {[
               {
                 title: "Product",
-                links: ["Features", "Pricing", "Use Cases", "Roadmap"]
+                links: [
+                  { name: "Features", path: "/" },
+                  { name: "Pricing", path: "/pricing" },
+                  { name: "Use Cases", path: "/" },
+                  { name: "Roadmap", path: "/" }
+                ]
               },
               {
                 title: "Resources",
-                links: ["Help Center", "Blog", "Tutorials", "FAQs"]
+                links: [
+                  { name: "Help Center", path: "/" },
+                  { name: "Blog", path: "/" },
+                  { name: "Tutorials", path: "/" },
+                  { name: "FAQs", path: "/" }
+                ]
               },
               {
                 title: "Company",
-                links: ["About Us", "Careers", "Privacy Policy", "Terms of Service"]
+                links: [
+                  { name: "About Us", path: "/about-us" },
+                  { name: "Careers", path: "/" },
+                  { name: "Privacy Policy", path: "/privacy-policy" },
+                  { name: "Terms of Service", path: "/terms-of-service" }
+                ]
               }
-            ].map((group, index) => (
-              <div key={index}>
-                <h4 className="font-semibold mb-4">{group.title}</h4>
-                <ul className="space-y-2">
-                  {group.links.map((link, linkIndex) => (
-                    <li key={linkIndex}>
-                      <a
-                        href="#"
-                        className="text-gray-600 hover:text-purple-600 text-sm transition-colors"
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
-            © {new Date().getFullYear()} LearnCraftify. All rights reserved.
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
 
-export default Index;
