@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,15 +5,11 @@ import { Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatFileSize } from '@/utils/fileUtils';
+import { ContentFile } from '@/hooks/useContentFiles';
 
 interface ContentFileUploadProps {
   selectedSubject: string;
-  onFileUploaded: (newFile: {
-    id: string;
-    name: string;
-    size: string;
-    date: string;
-  }) => void;
+  onFileUploaded: (newFile: ContentFile) => void;
 }
 
 const ContentFileUpload = ({ selectedSubject, onFileUploaded }: ContentFileUploadProps) => {
@@ -22,14 +17,12 @@ const ContentFileUpload = ({ selectedSubject, onFileUploaded }: ContentFileUploa
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
   };
 
-  // Handle content upload
   const handleUpload = async () => {
     if (!selectedFile) {
       toast({
@@ -43,24 +36,20 @@ const ContentFileUpload = ({ selectedSubject, onFileUploaded }: ContentFileUploa
     setIsUploading(true);
     
     try {
-      // Generate a unique file path
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `${selectedSubject}/${fileName}`;
       
-      // Upload file to storage bucket
       const { error: uploadError } = await supabase.storage
         .from('content_files')
         .upload(filePath, selectedFile);
         
       if (uploadError) throw uploadError;
       
-      // Get the public URL of the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('content_files')
         .getPublicUrl(filePath);
       
-      // Add file metadata to the database
       const { data, error } = await supabase
         .from('content_files')
         .insert([{
@@ -74,7 +63,6 @@ const ContentFileUpload = ({ selectedSubject, onFileUploaded }: ContentFileUploa
         
       if (error) throw error;
       
-      // Notify parent component with the new file
       if (data && data.length > 0) {
         const newFile = {
           id: data[0].id,
@@ -86,7 +74,6 @@ const ContentFileUpload = ({ selectedSubject, onFileUploaded }: ContentFileUploa
         onFileUploaded(newFile);
       }
       
-      // Reset the file input
       setSelectedFile(null);
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';

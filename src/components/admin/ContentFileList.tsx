@@ -1,14 +1,9 @@
-
 import { FolderOpen, Loader2 } from 'lucide-react';
 import ContentFileItem from './ContentFileItem';
+import { ContentFile } from '@/hooks/useContentFiles';
 
 interface ContentFileListProps {
-  contentFiles: {
-    id: string;
-    name: string;
-    size: string;
-    date: string;
-  }[];
+  contentFiles: ContentFile[];
   isLoading: boolean;
   selectedSubject: string;
   onDeleteFile: (id: string) => void;

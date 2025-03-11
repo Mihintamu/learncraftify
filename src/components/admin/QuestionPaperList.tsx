@@ -1,18 +1,12 @@
-
 import { useState } from 'react';
 import { FolderOpen, Loader2, FileText, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { QuestionPaper } from '@/hooks/useQuestionPapers';
 
 interface QuestionPaperListProps {
-  papers: {
-    id: string;
-    name: string;
-    year: string;
-    size: string;
-    date: string;
-  }[];
+  papers: QuestionPaper[];
   isLoading: boolean;
   selectedSubject: string;
   onDeletePaper: (id: string) => void;

@@ -1,17 +1,12 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ContentFile } from '@/hooks/useContentFiles';
 
 interface ContentFileItemProps {
-  file: {
-    id: string;
-    name: string;
-    size: string;
-    date: string;
-  };
+  file: ContentFile;
   onDelete: (id: string) => void;
 }
 

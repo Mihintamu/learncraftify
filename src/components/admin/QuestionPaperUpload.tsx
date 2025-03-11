@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,16 +5,11 @@ import { Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatFileSize } from '@/utils/fileUtils';
+import { QuestionPaper } from '@/hooks/useQuestionPapers';
 
 interface QuestionPaperUploadProps {
   selectedSubject: string;
-  onPaperUploaded: (newPaper: {
-    id: string;
-    name: string;
-    year: string;
-    size: string;
-    date: string;
-  }) => void;
+  onPaperUploaded: (newPaper: QuestionPaper) => void;
 }
 
 interface QuestionPaperInsertResult {
@@ -33,19 +27,16 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
   const [year, setYear] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
   };
 
-  // Handle year input
   const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setYear(e.target.value);
   };
 
-  // Handle question paper upload
   const handleUpload = async () => {
     if (!selectedFile) {
       toast({
@@ -68,24 +59,20 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
     setIsUploading(true);
     
     try {
-      // Generate a unique file path
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `${selectedSubject}/papers/${fileName}`;
       
-      // Upload file to storage bucket
       const { error: uploadError } = await supabase.storage
         .from('question_papers')
         .upload(filePath, selectedFile);
         
       if (uploadError) throw uploadError;
       
-      // Get the public URL of the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('question_papers')
         .getPublicUrl(filePath);
       
-      // Add file metadata to the database
       const { data, error } = await supabase
         .from('question_papers')
         .insert([{
@@ -100,9 +87,7 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
         
       if (error) throw error;
       
-      // Safely handle the response data
       if (data && data.length > 0) {
-        // Validate the returned data has the expected properties
         const paperData = data[0] as QuestionPaperInsertResult;
         
         const newPaper = {
@@ -118,7 +103,6 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
         throw new Error('No data returned after insert');
       }
       
-      // Reset the form
       setSelectedFile(null);
       setYear("");
       const fileInput = document.getElementById('paper-upload') as HTMLInputElement;
