@@ -31,9 +31,9 @@ const QuestionPaperList = ({
     try {
       setDeletingId(id);
       
-      // First get the file record to get the path
+      // First get the file record to get the path (using any as a temporary workaround for type issues)
       const { data: fileData, error: fetchError } = await supabase
-        .from('question_papers')
+        .from('question_papers' as any)
         .select('file_path')
         .eq('id', id)
         .single();
@@ -55,7 +55,7 @@ const QuestionPaperList = ({
       
       // Delete the file record from the database
       const { error: deleteError } = await supabase
-        .from('question_papers')
+        .from('question_papers' as any)
         .delete()
         .eq('id', id);
         

@@ -98,8 +98,9 @@ const ContentTab = () => {
   const fetchQuestionPapers = async () => {
     try {
       setIsPapersLoading(true);
+      // Using 'as any' as a temporary workaround for type issues
       const { data, error } = await supabase
-        .from('question_papers')
+        .from('question_papers' as any)
         .select('*')
         .eq('subject', selectedSubject)
         .order('year', { ascending: false });

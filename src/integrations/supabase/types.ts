@@ -39,6 +39,39 @@ export type Database = {
         }
         Relationships: []
       }
+      question_papers: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: string
+          file_type: string | null
+          id: string
+          subject: string
+          upload_date: string
+          year: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size: string
+          file_type?: string | null
+          id?: string
+          subject: string
+          upload_date?: string
+          year: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: string
+          file_type?: string | null
+          id?: string
+          subject?: string
+          upload_date?: string
+          year?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           created_at: string

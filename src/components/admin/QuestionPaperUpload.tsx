@@ -76,9 +76,9 @@ const QuestionPaperUpload = ({ selectedSubject, onPaperUploaded }: QuestionPaper
         .from('question_papers')
         .getPublicUrl(filePath);
       
-      // Add file metadata to the database
+      // Add file metadata to the database (using any as a temporary workaround for type issues)
       const { data, error } = await supabase
-        .from('question_papers')
+        .from('question_papers' as any)
         .insert([{
           subject: selectedSubject,
           file_name: selectedFile.name,
