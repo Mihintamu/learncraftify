@@ -29,11 +29,13 @@ export const generateContent = async (
   }
   
   try {
-    console.log('Sending request to Edge Function with data:', JSON.stringify(requestData));
+    // Create a properly formatted JSON string to send
+    const requestBody = JSON.stringify(requestData);
+    console.log('Sending request to Edge Function with body:', requestBody);
     
-    // Ensure we're sending a properly formatted request with stringified JSON
+    // Ensure we're sending a properly formatted request
     const { data, error } = await supabase.functions.invoke('generate-content', {
-      body: JSON.stringify(requestData),
+      body: requestBody,
       headers: {
         'Content-Type': 'application/json',
       }

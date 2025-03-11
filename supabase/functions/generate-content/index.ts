@@ -20,7 +20,8 @@ function createResponse(body: any, status = 200) {
 
 async function handleRequest(req: Request) {
   try {
-    console.log('Request content-type:', req.headers.get('content-type'));
+    console.log('Request received method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
     // First check if the content-type is correct
     const contentType = req.headers.get('content-type');
@@ -31,15 +32,30 @@ async function handleRequest(req: Request) {
       }, 400);
     }
     
-    // Use clone to avoid consuming the body
-    const clonedReq = req.clone();
-    console.log('Request method:', clonedReq.method);
-    console.log('Request headers:', Object.fromEntries(clonedReq.headers.entries()));
+    // Clone the request to safely log the body
+    const reqClone = req.clone();
+    let requestBodyText = '';
+    try {
+      requestBodyText = await reqClone.text();
+      console.log('Raw request body:', requestBodyText);
+      
+      if (!requestBodyText || requestBodyText.trim() === '') {
+        console.error('Empty request body received');
+        return createResponse({
+          error: 'Empty request body received'
+        }, 400);
+      }
+    } catch (bodyError) {
+      console.error('Error reading request body:', bodyError);
+      return createResponse({
+        error: `Could not read request body: ${bodyError.message}`
+      }, 400);
+    }
     
-    // Parse request body directly as JSON
+    // Parse request body as JSON
     let requestData;
     try {
-      requestData = await req.json();
+      requestData = JSON.parse(requestBodyText);
       console.log('Successfully parsed request data:', JSON.stringify(requestData));
     } catch (jsonError) {
       console.error('Failed to parse request JSON:', jsonError);
