@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 
 // Payment processing utilities to be implemented later
@@ -170,6 +171,8 @@ const Checkout = () => {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

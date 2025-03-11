@@ -1,6 +1,6 @@
-
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => {
   useEffect(() => {
@@ -76,56 +76,7 @@ const PrivacyPolicy = () => {
         </div>
       </main>
       
-      <footer className="bg-gray-50 py-12 px-4 mt-auto">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 text-xl font-semibold mb-4">
-                <span className="bg-purple-500 text-white p-1 rounded">S</span>
-                <span>SenpAI</span>
-              </div>
-              <p className="text-gray-600 text-sm mb-4">
-                AI-powered study materials and assignment generation for college students.
-              </p>
-            </div>
-            
-            {[
-              {
-                title: "Product",
-                links: ["Features", "Pricing", "Use Cases", "Roadmap"]
-              },
-              {
-                title: "Resources",
-                links: ["Help Center", "Blog", "Tutorials", "FAQs"]
-              },
-              {
-                title: "Company",
-                links: ["About Us", "Careers", "Privacy Policy", "Terms of Service"]
-              }
-            ].map((group, index) => (
-              <div key={index}>
-                <h4 className="font-semibold mb-4">{group.title}</h4>
-                <ul className="space-y-2">
-                  {group.links.map((link, linkIndex) => (
-                    <li key={linkIndex}>
-                      <a
-                        href="#"
-                        className="text-gray-600 hover:text-purple-600 text-sm transition-colors"
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
-            © {new Date().getFullYear()} SenpAI. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

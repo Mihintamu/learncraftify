@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
-import { useNavigate } from 'react-router-dom';
+import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 
 const pricingPlans = [
@@ -78,7 +78,7 @@ const Pricing = () => {
     toast.info('Payment gateway not configured yet. This will redirect to checkout in production.');
     
     // In future this would be:
-    // navigate(`/checkout?plan=${planId}&billing=${billingInterval}`);
+    navigate(`/checkout?plan=${planId}&billing=${billingInterval}`);
   };
 
   return (
@@ -221,6 +221,8 @@ const Pricing = () => {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 };
