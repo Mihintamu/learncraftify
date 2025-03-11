@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,7 +87,6 @@ export const useDashboard = () => {
       
       if (error) throw error;
       
-      // Map the subjects data to include icons and descriptions
       const subjectIcons = {
         'Mathematics': 'BarChart',
         'Computer Science': 'Book',
@@ -118,7 +116,7 @@ export const useDashboard = () => {
       const mappedSubjects = data?.map(subject => ({
         id: subject.id,
         name: subject.name,
-        title: subject.name, // Add this to maintain compatibility
+        title: subject.name, // Make sure both name and title are set to maintain compatibility
         description: subjectDescriptions[subject.name] || `Study materials for ${subject.name}`,
         icon: subjectIcons[subject.name] || 'BookOpen',
         href: `#${subject.name.toLowerCase().replace(/\s+/g, '-')}`
@@ -134,8 +132,6 @@ export const useDashboard = () => {
 
   const fetchRecentActivity = async () => {
     try {
-      // In a real implementation, you would fetch actual activity data
-      // For now, we'll use placeholder data since we don't have an activity table yet
       const activityData = [
         {
           id: 1,
