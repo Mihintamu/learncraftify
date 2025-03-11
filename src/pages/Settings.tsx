@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ChevronLeft, Save, Bell, Monitor, Globe, Clock, PencilLine } from 'lucide-react';
@@ -12,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Json } from '@/integrations/supabase/types';
 
 interface NotificationPreferences {
   email: boolean;
@@ -91,17 +93,26 @@ const Settings = () => {
         avatar_url: profileData.avatar_url || ''
       });
       
-      const notificationPrefs = settingsData.notification_preferences ? 
-        (typeof settingsData.notification_preferences === 'object' ? 
-          settingsData.notification_preferences : 
-          { email: true, push: true }) : 
-        { email: true, push: true };
+      // Safely handle the notification_preferences JSON field from the database
+      let notificationPrefs: NotificationPreferences = { email: true, push: true };
+      
+      if (settingsData.notification_preferences) {
+        // Make sure it's an object and not an array
+        if (typeof settingsData.notification_preferences === 'object' && 
+            !Array.isArray(settingsData.notification_preferences)) {
+          
+          const prefs = settingsData.notification_preferences as Record<string, unknown>;
+          
+          // Extract values and convert them to boolean
+          notificationPrefs = {
+            email: prefs.email !== undefined ? Boolean(prefs.email) : true,
+            push: prefs.push !== undefined ? Boolean(prefs.push) : true
+          };
+        }
+      }
       
       setSettings({
-        notification_preferences: {
-          email: notificationPrefs.email !== undefined ? Boolean(notificationPrefs.email) : true,
-          push: notificationPrefs.push !== undefined ? Boolean(notificationPrefs.push) : true
-        },
+        notification_preferences: notificationPrefs,
         theme: settingsData.theme || 'light',
         language: settingsData.language || 'en',
         weekly_summary: settingsData.weekly_summary !== null ? Boolean(settingsData.weekly_summary) : true,
@@ -161,10 +172,16 @@ const Settings = () => {
       
       if (profileError) throw profileError;
       
+      // Convert NotificationPreferences to a JSON-compatible format (Record<string, Json>)
+      const notificationPreferences = {
+        email: settings.notification_preferences.email,
+        push: settings.notification_preferences.push
+      } as Record<string, boolean>;
+      
       const { error: settingsError } = await supabase
         .from('user_settings')
         .update({
-          notification_preferences: settings.notification_preferences,
+          notification_preferences: notificationPreferences,
           theme: settings.theme,
           language: settings.language,
           weekly_summary: settings.weekly_summary,
