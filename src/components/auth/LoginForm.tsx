@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -15,7 +15,6 @@ interface FormData {
 
 const LoginForm = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -32,41 +31,39 @@ const LoginForm = () => {
     e.preventDefault();
     
     if (!formData.email || !formData.password) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill in all fields");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Authenticate with Supabase
+      console.log('Attempting login with:', { email: formData.email });
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
-      
+
       if (error) {
-        throw error;
+        console.error('Login error:', error);
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Please check your email to confirm your account');
+        } else {
+          toast.error(error.message || 'Failed to login');
+        }
+        return;
+      }
+
+      if (data.user) {
+        console.log('Login successful:', data.user);
+        toast.success('Successfully logged in');
+        navigate('/dashboard');
       }
       
-      toast({
-        title: "Success",
-        description: "You have been logged in successfully",
-      });
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
+      toast.error(error.message || 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
