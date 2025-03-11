@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,21 +40,21 @@ const recentActivityData = [
     title: 'Physics Assignment',
     subject: 'Physics',
     date: '2 hours ago',
-    type: 'assignment'
+    type: 'assignment' as const
   },
   {
     id: 2,
     title: 'Calculus Notes',
     subject: 'Mathematics',
     date: 'Yesterday',
-    type: 'notes'
+    type: 'notes' as const
   },
   {
     id: 3,
     title: 'Data Structures Review',
     subject: 'Computer Science',
     date: '3 days ago',
-    type: 'notes'
+    type: 'notes' as const
   }
 ];
 
@@ -66,7 +65,6 @@ export const useDashboard = () => {
   const [userStats, setUserStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -87,7 +85,6 @@ export const useDashboard = () => {
     try {
       setIsLoading(true);
       
-      // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -96,7 +93,6 @@ export const useDashboard = () => {
       
       if (profileError) throw profileError;
       
-      // Fetch user stats
       const { data: statsData, error: statsError } = await supabase
         .from('user_stats')
         .select('*')

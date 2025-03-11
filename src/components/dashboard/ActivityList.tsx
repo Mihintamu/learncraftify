@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, BookOpen, ChevronRight } from 'lucide-react';
 
-interface ActivityItem {
+export interface ActivityItem {
   id: number;
   title: string;
   subject: string;
