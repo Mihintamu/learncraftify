@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { Cpu } from 'lucide-react';
 
 const footerLinks = [
   {
@@ -38,7 +39,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 text-xl font-semibold mb-4">
-              <span className="bg-purple-500 text-white p-1 rounded">S</span>
+              <span className="bg-purple-500 text-white p-1 rounded">
+                <Cpu className="h-5 w-5" />
+              </span>
               <span>SenpAI</span>
             </div>
             <p className="text-gray-600 text-sm mb-4">
