@@ -31,7 +31,7 @@ const Features = () => {
         <div className="text-center mb-16 animate-fade-up">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features for Students</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            LearnCraftify helps you excel in your studies with AI-powered tools designed specifically for college students.
+            SenpAI helps you excel in your studies with AI-powered tools designed specifically for college students.
           </p>
         </div>
         

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 
@@ -18,7 +19,7 @@ const PrivacyPolicy = () => {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-3">Introduction</h2>
             <p className="text-gray-700 mb-4">
-              LearnCraftify ("we", "our", or "us") respects your privacy and is committed to protecting your personal data. 
+              SenpAI ("we", "our", or "us") respects your privacy and is committed to protecting your personal data. 
               This privacy policy will inform you about how we look after your personal data when you visit our website 
               and tell you about your privacy rights and how the law protects you.
             </p>
@@ -80,8 +81,8 @@ const PrivacyPolicy = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 text-xl font-semibold mb-4">
-                <span className="bg-purple-500 text-white p-1 rounded">LC</span>
-                <span>LearnCraftify</span>
+                <span className="bg-purple-500 text-white p-1 rounded">S</span>
+                <span>SenpAI</span>
               </div>
               <p className="text-gray-600 text-sm mb-4">
                 AI-powered study materials and assignment generation for college students.
@@ -121,7 +122,7 @@ const PrivacyPolicy = () => {
           </div>
           
           <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
-            © {new Date().getFullYear()} LearnCraftify. All rights reserved.
+            © {new Date().getFullYear()} SenpAI. All rights reserved.
           </div>
         </div>
       </footer>

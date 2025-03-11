@@ -38,8 +38,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 text-xl font-semibold mb-4">
-              <span className="bg-purple-500 text-white p-1 rounded">LC</span>
-              <span>LearnCraftify</span>
+              <span className="bg-purple-500 text-white p-1 rounded">S</span>
+              <span>SenpAI</span>
             </div>
             <p className="text-gray-600 text-sm mb-4">
               AI-powered study materials and assignment generation for college students.
@@ -66,7 +66,7 @@ const Footer = () => {
         </div>
         
         <div className="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
-          © {new Date().getFullYear()} LearnCraftify. All rights reserved.
+          © {new Date().getFullYear()} SenpAI. All rights reserved.
         </div>
       </div>
     </footer>

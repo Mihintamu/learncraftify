@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart } from 'lucide-react';
@@ -89,8 +90,8 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 p-4">
         <div className="flex items-center gap-2 text-xl font-semibold px-2 py-4">
-          <span className="bg-purple-500 text-white p-1 rounded">LC</span>
-          <span>LearnCraftify</span>
+          <span className="bg-purple-500 text-white p-1 rounded">S</span>
+          <span>SenpAI</span>
         </div>
         
         <nav className="mt-8 flex flex-col gap-2 flex-1">

@@ -61,8 +61,8 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-b from-purple-50 to-white">
       <Link to="/" className="flex items-center gap-2 text-xl font-semibold mb-8">
-        <span className="bg-purple-500 text-white p-1 rounded">LC</span>
-        <span>LearnCraftify</span>
+        <span className="bg-purple-500 text-white p-1 rounded">S</span>
+        <span>SenpAI</span>
       </Link>
       
       <Card className="w-full max-w-md animate-fade-up">
