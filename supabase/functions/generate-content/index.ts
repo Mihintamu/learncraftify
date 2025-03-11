@@ -1,6 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { parse as parsePdf } from 'npm:pdf-parse'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,112 +58,105 @@ serve(async (req) => {
       )
     }
 
-    // Placeholder for actual file content
+    // Parse and extract content from files
     let fileContents = []
     if (contentFiles && contentFiles.length > 0) {
       console.log(`Found ${contentFiles.length} content files for subject: ${subject}`)
       
-      // Extract specific information about depreciation if that's the topic
-      if (topic.toLowerCase().includes('depreciation')) {
-        fileContents.push({
-          title: "Characteristics of Depreciation",
-          content: `
-1. Depreciation is a non-cash expense that reduces the value of an asset due to wear and tear, obsolescence, or time passage.
-2. It is a systematic allocation of the cost of a tangible asset over its useful life.
-3. Depreciation is a process, not a valuation technique - it allocates cost rather than determining market value.
-4. Once recorded, depreciation is irreversible under normal accounting practices.
-5. Depreciation applies only to tangible assets that have a useful life of more than one accounting period.
-6. Land is generally not subject to depreciation as it doesn't have a limited useful life.
-7. Depreciation is recorded regardless of the physical condition of the asset.
-8. The total amount depreciated cannot exceed the asset's historical cost minus salvage value.
-`
-        })
-      } else {
-        // For other topics, we could fetch some general information
-        // In a real-world scenario, you would parse the PDF files or other documents
-        fileContents.push({
-          title: `Information about ${topic}`,
-          content: `This would contain extracted content from the uploaded files related to ${topic} in ${subject}.`
-        })
+      for (const file of contentFiles) {
+        try {
+          // Download file from storage
+          const { data: fileData, error: downloadError } = await supabaseClient
+            .storage
+            .from('content_files')
+            .download(`${subject}/${file.file_name}`)
+
+          if (downloadError) {
+            console.error(`Error downloading file ${file.file_name}:`, downloadError)
+            continue
+          }
+
+          if (!fileData) {
+            console.error(`No data found for file ${file.file_name}`)
+            continue
+          }
+
+          // Convert file to ArrayBuffer
+          const arrayBuffer = await fileData.arrayBuffer()
+          
+          // Parse PDF content
+          if (file.file_type.toLowerCase() === 'pdf') {
+            const pdfData = await parsePdf(new Uint8Array(arrayBuffer))
+            fileContents.push({
+              title: file.file_name,
+              content: pdfData.text
+            })
+            console.log(`Successfully parsed PDF: ${file.file_name}`)
+          }
+        } catch (error) {
+          console.error(`Error processing file ${file.file_name}:`, error)
+        }
       }
     }
 
-    // Generate more comprehensive content based on the topic and available knowledge
+    // Prepare content based on parsed files and topic
+    let relevantContent = ''
+    const searchTopic = topic.toLowerCase()
+    
+    // Search through parsed content for relevant information
+    for (const file of fileContents) {
+      const contentLower = file.content.toLowerCase()
+      if (contentLower.includes(searchTopic)) {
+        // Extract paragraphs containing the topic
+        const paragraphs = file.content.split('\n\n')
+        const relevantParagraphs = paragraphs.filter(p => 
+          p.toLowerCase().includes(searchTopic)
+        )
+        relevantContent += relevantParagraphs.join('\n\n') + '\n\n'
+      }
+    }
+
+    // Generate the study guide content
     let generatedContent = `# ${topic} (${subject})
 
 ## Overview
 This is a comprehensive study guide on ${topic} for ${subject} students.
 
-`
-
-    // Add information about the files we found (or didn't find)
-    if (contentFiles && contentFiles.length > 0) {
-      generatedContent += `## References
+## References
 This content was generated using ${contentFiles.length} reference materials from the knowledge base.\n\n`
 
-      // Add file names as references
-      contentFiles.forEach((file, index) => {
-        generatedContent += `${index + 1}. ${file.file_name}\n`
-      })
-    } else {
-      generatedContent += `\nNote: No specific reference materials were found for this subject. This content is generated based on general knowledge.\n`
-    }
+    // Add file names as references
+    contentFiles.forEach((file, index) => {
+      generatedContent += `${index + 1}. ${file.file_name}\n`
+    })
 
-    // Add topic-specific content based on the knowledge base
+    // Add extracted content
     generatedContent += `\n## Main Content\n`
-
-    if (topic.toLowerCase().includes('depreciation') && fileContents.length > 0) {
-      generatedContent += `
-### Introduction to ${topic}
-Depreciation is a fundamental accounting concept that allocates the cost of tangible assets over their useful life. It represents the reduction in value of an asset due to usage, passage of time, wear and tear, technological obsolescence, depletion, inadequacy, or other factors.
-
-### Key Characteristics of Depreciation
-${fileContents[0].content}
-
-### Study Notes
-${instructions ? `Based on your instructions: "${instructions}", here are some specific notes:` : 'Here are some important points to remember about depreciation:'}
-
-- Depreciation is a non-cash expense, meaning it reduces profit but doesn't involve an actual cash outflow
-- Different depreciation methods (straight-line, declining balance, units of production) can significantly impact financial statements
-- Depreciation expense reduces taxable income, making it an important tax consideration
-- Accumulated depreciation is reported on the balance sheet as a contra asset account
-- The net book value of an asset equals its cost minus accumulated depreciation
-
-### Practice Questions
-1. Question: What distinguishes depreciation from other expenses in accounting?
-   Answer: Unlike many expenses, depreciation is a non-cash expense that allocates the cost of an asset over its useful life rather than representing an actual outflow of cash.
-
-2. Question: Why can't land be depreciated in financial accounting?
-   Answer: Land is considered to have an unlimited useful life and does not deteriorate or wear out over time, so it maintains its value and is not subject to depreciation.
-
-3. Question: How does the concept of materiality apply to depreciation calculations?
-   Answer: If an asset's cost is immaterial (insignificant) relative to the company's financial statements, it might be expensed immediately rather than depreciated over time.
-`
+    
+    if (relevantContent) {
+      generatedContent += `\n### Key Concepts\n${relevantContent}\n`
     } else {
-      // Generic content for other topics
-      generatedContent += `
-### Introduction to ${topic}
-${topic} is an important concept in ${subject} that helps students understand the fundamental principles and applications in financial reporting and analysis.
-
-### Key Points to Remember
-Based on the available knowledge base:
-1. ${topic} plays a crucial role in accurate financial reporting
-2. Understanding ${topic} helps in making informed business decisions
-3. ${topic} is governed by specific accounting standards and principles
-
-### Study Notes
-${instructions ? `Based on your instructions: "${instructions}", here are some specific notes:` : 'Here are some important considerations:'}
-
-- ${topic} must be applied consistently across accounting periods
-- Proper documentation is essential for ${topic} implementation
-- ${topic} affects both the income statement and balance sheet
-`
+      generatedContent += `\nNo specific content found for this topic in the knowledge base. Please ensure relevant materials are uploaded.\n`
     }
 
-    generatedContent += `
-## Conclusion
-This study guide on ${topic} covers the essential aspects that students need to understand for ${subject}. For more detailed information, refer to the complete course materials and the referenced knowledge base documents.
-`
+    // Add study notes based on instructions
+    generatedContent += `\n### Study Notes\n`
+    if (instructions) {
+      generatedContent += `Based on your instructions: "${instructions}", here are some key points:\n\n`
+    }
+    
+    // Extract key points from relevant content
+    const keyPoints = relevantContent
+      .split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => `- ${line.trim()}`)
+      .join('\n')
+    
+    generatedContent += keyPoints || '- No specific points found in the knowledge base for this topic.'
+
+    // Add conclusion
+    generatedContent += `\n\n## Conclusion
+This study guide provides a comprehensive overview of ${topic} in ${subject}. For more detailed information, please refer to the referenced materials.`
 
     // Return the generated content
     return new Response(
