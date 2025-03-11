@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import SubjectCard from '@/components/SubjectCard';
 import ContentRequestForm from '@/components/ContentRequestForm';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const subjects = [
   {
@@ -67,14 +69,72 @@ const recentActivityData = [
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('subjects');
+  const [userProfile, setUserProfile] = useState(null);
+  const [userStats, setUserStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const handleLogout = () => {
-    toast.success('Successfully logged out');
-    navigate('/');
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Please log in to access the dashboard');
+        navigate('/login');
+        return;
+      }
+      
+      fetchUserData(session.user.id);
+    };
+    
+    checkAuth();
+  }, [navigate]);
+  
+  const fetchUserData = async (userId) => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      // Fetch user stats
+      const { data: statsData, error: statsError } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (statsError) throw statsError;
+      
+      setUserProfile(profileData);
+      setUserStats(statsData);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast.error('Failed to load user data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Successfully logged out');
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to log out');
+    }
   };
   
   const handleSettingsClick = () => {
-    toast.info('Settings will be available in the next update');
+    navigate('/settings');
   };
   
   const handleSavedClick = () => {
@@ -152,32 +212,71 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <header className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">Welcome back, Alex</h1>
-            <p className="text-gray-600">
-              Get help with your assignments and study materials
-            </p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-64 mb-2" />
+                <Skeleton className="h-5 w-72" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold mb-2">
+                  Welcome back, {userProfile?.full_name || userProfile?.username || 'User'}
+                </h1>
+                <p className="text-gray-600">
+                  Get help with your assignments and study materials
+                </p>
+              </>
+            )}
           </header>
           
           {/* Quick Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {[
-              { label: 'Generated Documents', value: '24', icon: <FileText className="h-5 w-5 text-purple-500" /> },
-              { label: 'Saved Documents', value: '12', icon: <Bookmark className="h-5 w-5 text-purple-500" /> },
-              { label: 'Subjects', value: '8', icon: <Book className="h-5 w-5 text-purple-500" /> },
-              { label: 'Usage Time', value: '18h', icon: <Clock className="h-5 w-5 text-purple-500" /> }
-            ].map((stat, index) => (
-              <Card key={index} className="hover-lift">
-                <CardContent className="flex items-center p-6">
-                  <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-purple-100 mr-4">
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {isLoading ? (
+              Array(4).fill(0).map((_, index) => (
+                <Card key={index} className="hover-lift">
+                  <CardContent className="p-6">
+                    <Skeleton className="h-12 w-12 rounded-lg mb-4" />
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-6 w-12" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              [
+                { 
+                  label: 'Generated Documents', 
+                  value: userStats?.generated_docs || '0', 
+                  icon: <FileText className="h-5 w-5 text-purple-500" /> 
+                },
+                { 
+                  label: 'Saved Documents', 
+                  value: userStats?.saved_docs || '0', 
+                  icon: <Bookmark className="h-5 w-5 text-purple-500" /> 
+                },
+                { 
+                  label: 'Subjects', 
+                  value: userStats?.subjects_count || '0', 
+                  icon: <Book className="h-5 w-5 text-purple-500" /> 
+                },
+                { 
+                  label: 'Usage Time', 
+                  value: `${userStats?.usage_time_hours || '0'}h`, 
+                  icon: <Clock className="h-5 w-5 text-purple-500" /> 
+                }
+              ].map((stat, index) => (
+                <Card key={index} className="hover-lift">
+                  <CardContent className="flex items-center p-6">
+                    <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-purple-100 mr-4">
+                      {stat.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">{stat.label}</p>
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>

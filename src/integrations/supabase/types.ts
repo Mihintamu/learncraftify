@@ -39,6 +39,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       question_papers: {
         Row: {
           file_name: string
@@ -87,6 +114,72 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          language: string | null
+          notification_preferences: Json | null
+          study_reminders: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+          weekly_summary: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          study_reminders?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+          weekly_summary?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          study_reminders?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_summary?: boolean | null
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          generated_docs: number | null
+          id: string
+          last_updated: string | null
+          saved_docs: number | null
+          subjects_count: number | null
+          usage_time_hours: number | null
+          user_id: string
+        }
+        Insert: {
+          generated_docs?: number | null
+          id?: string
+          last_updated?: string | null
+          saved_docs?: number | null
+          subjects_count?: number | null
+          usage_time_hours?: number | null
+          user_id: string
+        }
+        Update: {
+          generated_docs?: number | null
+          id?: string
+          last_updated?: string | null
+          saved_docs?: number | null
+          subjects_count?: number | null
+          usage_time_hours?: number | null
+          user_id?: string
         }
         Relationships: []
       }
