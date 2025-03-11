@@ -1,211 +1,48 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, History, Settings, LogOut, Book, ChevronRight, Bookmark, Clock, BarChart, Cpu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Cpu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
 import SubjectCard from '@/components/SubjectCard';
 import ContentRequestForm from '@/components/ContentRequestForm';
-import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const subjects = [
-  {
-    id: 1,
-    title: 'Mathematics',
-    description: 'Calculus, Algebra, Statistics, and more',
-    icon: <BarChart className="h-6 w-6" />,
-    href: '#'
-  },
-  {
-    id: 2,
-    title: 'Computer Science',
-    description: 'Programming, Algorithms, Data Structures',
-    icon: <Book className="h-6 w-6" />,
-    href: '#'
-  },
-  {
-    id: 3,
-    title: 'Physics',
-    description: 'Mechanics, Thermodynamics, Electromagnetism',
-    icon: <BookOpen className="h-6 w-6" />,
-    href: '#'
-  },
-  {
-    id: 4,
-    title: 'Literature',
-    description: 'Essays, Analysis, Research Papers',
-    icon: <FileText className="h-6 w-6" />,
-    href: '#'
-  }
-];
-
-const recentActivityData = [
-  {
-    id: 1,
-    title: 'Physics Assignment',
-    subject: 'Physics',
-    date: '2 hours ago',
-    type: 'assignment'
-  },
-  {
-    id: 2,
-    title: 'Calculus Notes',
-    subject: 'Mathematics',
-    date: 'Yesterday',
-    type: 'notes'
-  },
-  {
-    id: 3,
-    title: 'Data Structures Review',
-    subject: 'Computer Science',
-    date: '3 days ago',
-    type: 'notes'
-  }
-];
+import Sidebar from '@/components/dashboard/Sidebar';
+import MobileNav from '@/components/dashboard/MobileNav';
+import UserStats from '@/components/dashboard/UserStats';
+import ActivityList from '@/components/dashboard/ActivityList';
+import { useDashboard } from '@/hooks/useDashboard';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('subjects');
-  const [userProfile, setUserProfile] = useState(null);
-  const [userStats, setUserStats] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Check if user is authenticated
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast.error('Please log in to access the dashboard');
-        navigate('/login');
-        return;
-      }
-      
-      fetchUserData(session.user.id);
-    };
-    
-    checkAuth();
-  }, [navigate]);
-  
-  const fetchUserData = async (userId) => {
-    try {
-      setIsLoading(true);
-      
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) throw profileError;
-      
-      // Fetch user stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('user_stats')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (statsError) throw statsError;
-      
-      setUserProfile(profileData);
-      setUserStats(statsData);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      toast.error('Failed to load user data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success('Successfully logged out');
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to log out');
-    }
-  };
-  
-  const handleSettingsClick = () => {
-    navigate('/settings');
-  };
-  
-  const handleSavedClick = () => {
-    toast.info('Saved materials will be available in the next update');
-  };
-  
-  const handleActivityClick = (activity: { title: string; type: string }) => {
-    toast.info(`Opening ${activity.title}`);
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    userProfile,
+    userStats,
+    isLoading,
+    subjects,
+    recentActivityData,
+    handleLogout,
+    handleSettingsClick,
+    handleSavedClick,
+    handleActivityClick
+  } = useDashboard();
 
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 p-4">
-        <div className="flex items-center gap-2 text-xl font-semibold px-2 py-4">
-          <span className="bg-purple-500 text-white p-1 rounded">
-            <Cpu className="h-5 w-5" />
-          </span>
-          <span>SenpAI</span>
-        </div>
-        
-        <nav className="mt-8 flex flex-col gap-2 flex-1">
-          <Button variant="ghost" className="justify-start gap-3" onClick={() => setActiveTab('subjects')}>
-            <BookOpen className="h-5 w-5" />
-            Subjects
-          </Button>
-          <Button variant="ghost" className="justify-start gap-3" onClick={() => setActiveTab('request')}>
-            <FileText className="h-5 w-5" />
-            Request Content
-          </Button>
-          <Button variant="ghost" className="justify-start gap-3" onClick={() => setActiveTab('history')}>
-            <History className="h-5 w-5" />
-            History
-          </Button>
-          <Button variant="ghost" className="justify-start gap-3" onClick={handleSavedClick}>
-            <Bookmark className="h-5 w-5" />
-            Saved
-          </Button>
-          <Button variant="ghost" className="justify-start gap-3" onClick={handleSettingsClick}>
-            <Settings className="h-5 w-5" />
-            Settings
-          </Button>
-        </nav>
-        
-        <Button variant="outline" className="mt-auto justify-start gap-3" onClick={handleLogout}>
-          <LogOut className="h-5 w-5" />
-          Logout
-        </Button>
-      </aside>
+      <Sidebar 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={handleLogout}
+        onSettingsClick={handleSettingsClick}
+        onSavedClick={handleSavedClick}
+      />
       
       {/* Mobile Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 md:hidden bg-white border-t border-gray-200">
-        <div className="flex justify-around">
-          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none" onClick={() => setActiveTab('subjects')}>
-            <BookOpen className="h-5 w-5 mb-1" />
-            <span className="text-xs">Subjects</span>
-          </Button>
-          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none" onClick={() => setActiveTab('request')}>
-            <FileText className="h-5 w-5 mb-1" />
-            <span className="text-xs">Request</span>
-          </Button>
-          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none" onClick={() => setActiveTab('history')}>
-            <History className="h-5 w-5 mb-1" />
-            <span className="text-xs">History</span>
-          </Button>
-          <Button variant="ghost" className="flex-1 flex-col py-3 h-auto rounded-none" onClick={handleSettingsClick}>
-            <Settings className="h-5 w-5 mb-1" />
-            <span className="text-xs">Settings</span>
-          </Button>
-        </div>
-      </div>
+      <MobileNav 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onSettingsClick={handleSettingsClick} 
+      />
       
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-auto">
@@ -230,54 +67,7 @@ const Dashboard = () => {
           </header>
           
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {isLoading ? (
-              Array(4).fill(0).map((_, index) => (
-                <Card key={index} className="hover-lift">
-                  <CardContent className="p-6">
-                    <Skeleton className="h-12 w-12 rounded-lg mb-4" />
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <Skeleton className="h-6 w-12" />
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              [
-                { 
-                  label: 'Generated Documents', 
-                  value: userStats?.generated_docs || '0', 
-                  icon: <FileText className="h-5 w-5 text-purple-500" /> 
-                },
-                { 
-                  label: 'Saved Documents', 
-                  value: userStats?.saved_docs || '0', 
-                  icon: <Bookmark className="h-5 w-5 text-purple-500" /> 
-                },
-                { 
-                  label: 'Subjects', 
-                  value: userStats?.subjects_count || '0', 
-                  icon: <Book className="h-5 w-5 text-purple-500" /> 
-                },
-                { 
-                  label: 'Usage Time', 
-                  value: `${userStats?.usage_time_hours || '0'}h`, 
-                  icon: <Clock className="h-5 w-5 text-purple-500" /> 
-                }
-              ].map((stat, index) => (
-                <Card key={index} className="hover-lift">
-                  <CardContent className="flex items-center p-6">
-                    <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-purple-100 mr-4">
-                      {stat.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">{stat.label}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+          <UserStats isLoading={isLoading} statsData={userStats} />
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
@@ -293,7 +83,33 @@ const Dashboard = () => {
                     key={subject.id}
                     title={subject.title}
                     description={subject.description}
-                    icon={subject.icon}
+                    icon={
+                      subject.icon === 'BarChart' ? (
+                        <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="20" x2="18" y2="10"></line>
+                          <line x1="12" y1="20" x2="12" y2="4"></line>
+                          <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                      ) : subject.icon === 'Book' ? (
+                        <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                      ) : subject.icon === 'BookOpen' ? (
+                        <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                      )
+                    }
                     href={`#${subject.title.toLowerCase().replace(/\s+/g, '-')}`}
                   />
                 ))}
@@ -307,34 +123,10 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="history" className="animate-fade-in">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
-                
-                {recentActivityData.map((item) => (
-                  <Card 
-                    key={item.id} 
-                    className="hover-lift cursor-pointer"
-                    onClick={() => handleActivityClick(item)}
-                  >
-                    <CardContent className="p-4 flex items-center">
-                      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-purple-100 text-purple-600 mr-4">
-                        {item.type === 'assignment' ? (
-                          <FileText className="h-5 w-5" />
-                        ) : (
-                          <BookOpen className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{item.title}</p>
-                        <p className="text-sm text-gray-500">
-                          {item.subject} • {item.date}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <ActivityList 
+                activities={recentActivityData} 
+                onActivityClick={handleActivityClick} 
+              />
             </TabsContent>
           </Tabs>
         </div>
